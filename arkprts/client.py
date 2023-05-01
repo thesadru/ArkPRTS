@@ -78,6 +78,8 @@ class Client:
                     resp.raise_for_status()
                     raise ArkPrtsError(await resp.read()) from e
 
+                if resp.status != 200:
+                    raise ArkPrtsError(data)
                 if "result" in data and isinstance(data["result"], int) and data["result"] != 0:
                     raise ArkPrtsError(data)
 
@@ -221,31 +223,38 @@ class Client:
         print(f"Channel UID: {channel_uid} Token: {token}")  # noqa: T201
         print(f'Usage: client.login_with_token("{channel_uid}", "{token}")')  # noqa: T201
 
-    def get_data(self) -> typing.Any:
+    async def get_data(self) -> typing.Any:
         """Get user data."""
-        return self.request("account/syncData", json={"platform": 1})
+        return await self.request("account/syncData", json={"platform": 1})
 
-    def _get_social_sort_list(
+    async def _get_social_sort_list(
         self,
         type: int,
         sort_key: typing.Sequence[str] = ["level"],
         param: typing.Mapping[str, str] = {},
     ) -> typing.Any:
         """Request sortedusers."""
-        return self.request("social/getSortListInfo", json={"type": type, "sortKeyList": sort_key, "param": param})
+        return await self.request(
+            "social/getSortListInfo",
+            json={"type": type, "sortKeyList": sort_key, "param": param},
+        )
 
-    def get_friend_info(self, ids: typing.Sequence[str]) -> typing.Any:
-        """Get friend list."""
-        return self.request("social/getFriendList", json={"idList": ids})
+    async def get_friend_info(self, ids: typing.Sequence[str]) -> typing.Any:
+        """Get detailed player info. You don't need to be friends actually."""
+        return await self.request("social/getFriendList", json={"idList": ids})
 
-    def get_player_info(self, ids: typing.Sequence[str]) -> typing.Any:
+    async def get_player_info(self, ids: typing.Sequence[str]) -> typing.Any:
         """Get player info."""
-        return self.request("social/searchPlayer", json={"idList": ids})
+        return await self.request("social/searchPlayer", json={"idList": ids})
 
-    def get_friends(self) -> typing.Any:
+    async def get_friends(self) -> typing.Any:
         """Get friends."""
-        return self._get_social_sort_list(1, ["level", "infoShare"])
+        return await self._get_social_sort_list(1, ["level", "infoShare"])
 
-    def search_nickname(self, nickname: str, nicknumber: str = "") -> typing.Any:
+    async def search_nickname(self, nickname: str, nicknumber: str = "") -> typing.Any:
         """Search for a nickname."""
-        return self._get_social_sort_list(1, ["level"], {"nickName": nickname, "nickNumber": nicknumber})
+        return await self._get_social_sort_list(0, ["level"], {"nickName": nickname, "nickNumber": nicknumber})
+
+    async def bind_nickname(self, nickname: str) -> typing.Any:
+        """Bind a nickname. Required for new accounts."""
+        return await self.request("user/bindNickName", json={"nickName": nickname})

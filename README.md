@@ -2,6 +2,8 @@
 
 Arknights python wrapper.
 
+This project aims to purely allow for data collection, no account automation is planned.
+
 ---
 
 Source Code: <https://github.com/thesadru/arkprts>
