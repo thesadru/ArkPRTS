@@ -46,7 +46,7 @@ def get_extras(directory: pathlib.Path) -> dict[str, list[str]]:
 
 dev_directory = pathlib.Path(__file__).parent
 setuptools.setup(
-    name="atuyka-dev",
+    name="arkprts-dev",
     install_requires=["nox", *get_normal_requirements(dev_directory)],
     extras_require=get_extras(dev_directory),
 )
