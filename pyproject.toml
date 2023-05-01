@@ -1,0 +1,105 @@
+[project]
+requires-python = ">=3.8"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 120
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.pyright]
+include = ["arkprts"]
+exclude = ["**/__init__.py", "tests/**"]
+typeCheckingMode = "strict"
+reportMissingTypeStubs = "none"
+reportImportCycles = "none"
+reportPrivateUsage = "none"
+
+[tool.coverage.run]
+source = ["arkprts"]
+omit = ["**/__init__.py", "**/__main__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+sort = "cover"
+
+[tool.ruff]
+select = ["ALL"]
+# 120 from black and then a bit
+line-length = 130
+# A: Shadowing built-in
+# ARG: Unused function argument (duck-typing)
+# EM: String literal in exception
+# ERA: Commented-out code
+# FBT: Boolean in positional function type (duck-typing)
+# SLF: Private member access
+# TCH: Not using TYPE_CHECKING (ugly)
+# ANN10: Missing type annotation for self/cls (useless)
+# ANN401: Use of typing.Any (complicates)
+# B008: Do not perform function calls in argument defaults (pydantic)
+# B027: Empty method in ABC (optional rewrite)
+# B905: zip without strict= (ugly)
+# C408: Unnecessary dict call (ugly)
+# D105: Missing docstring in magic method (useless)
+# N805: First argument is not self (pydantic)
+# PGH003: Specific rules when ignoring type issues
+# PLR0913: Too many arguments
+# PLR2004: constant value in comparison (asserts)
+# PLW2901: Redefining for-loop variable
+# RET504: Unnecessary variable before return (ugly)
+# TRY003: Long exception message
+# S101: Use of assert (type-checking)
+# S110: Try, Except, Pass (annoying)
+ignore = [
+  "A",
+  "ARG",
+  "EM",
+  "ERA",
+  "FBT",
+  "SLF",
+  "TCH",
+  "ANN10",
+  "ANN401",
+  "B008",
+  "B027",
+  "B905",
+  "C408",
+  "D105",
+  "N805",
+  "PGH003",
+  "PLR0913",
+  "PLR2004",
+  "PLW2901",
+  "RET504",
+  "S101",
+  "TRY003",
+  "S110",
+]
+# auto-fixing too intrusive
+# F401: Unused import
+# F841: Unused variable
+# B007: Unused loop variable
+unfixable = ["F401", "F841", "B007"]
+
+[tool.ruff.per-file-ignores]
+# F40: import (unused imports)
+"**/__init__.py" = ["F40"]
+# D10: missing docstring (tests)
+# F841: unused variable (return values)
+# S10: hardcoded passwords (dummy values)
+"tests/**" = ["D10", "F841", "S10"]
+# INP001: No __init__.py (configuration)
+"docs/conf.py" = ["INP001"]
+"dev-requirements/setup.py" = ["INP001"]
+
+[tool.ruff.mccabe]
+max-complexity = 15
+
+[tool.ruff.pydocstyle]
+convention = "numpy"

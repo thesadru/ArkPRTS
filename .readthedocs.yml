@@ -1,0 +1,14 @@
+version: 2
+
+build:
+  os: "ubuntu-20.04"
+  tools:
+    python: "3.11"
+
+sphinx:
+  configuration: docs/conf.py
+  builder: dirhtml
+
+python:
+  install:
+    - requirements: dev-requirements/docs-requirements.txt

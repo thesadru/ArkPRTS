@@ -1,0 +1,2 @@
+slotscheck
+ruff

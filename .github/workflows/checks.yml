@@ -1,0 +1,90 @@
+name: Run checks
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: install nox
+        run: python -m pip install nox
+      - name: lint
+        run: python -m nox -s lint
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: install nox
+        run: python -m pip install nox
+      - name: Run tests
+        run: |
+          python -m nox -s test --python ${{ matrix.python-version }} --verbose -- --cov-append
+          mv .coverage .coverage.${{ matrix.python-version }}
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: .coverage.${{ matrix.python-version }}
+          retention-days: 1
+          if-no-files-found: error
+
+  type-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: install nox
+        run: python -m pip install nox
+      - name: Run pyright
+        run: python -m nox -s type-check
+
+  verify-types:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: install nox
+        run: python -m pip install nox
+      - name: Run type checker
+        run: python -m nox -s verify-types
+
+  prettier:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run prettier
+        run: npx prettier --check *.md
