@@ -1,12 +1,11 @@
 """Entry-point."""
 import argparse
 import asyncio
-import datetime
 
 from .client import Client
 
-parser = argparse.ArgumentParser(description="Get user info from Arknights API.")
-parser.add_argument("nickname", type=str, help="User nickname")
+parser: argparse.ArgumentParser = argparse.ArgumentParser(description="Get user info from Arknights API.")
+parser.add_argument("nickname", type=str, nargs="?", default=None, help="User nickname")
 parser.add_argument("--uid", type=str, default=None, help="Channel UID")
 parser.add_argument("--token", type=str, default="", help="Yostar Token")
 
@@ -22,23 +21,29 @@ async def main() -> None:
     else:
         await client.login_with_email()
 
-    data = await client.search_nickname(args.nickname)
-    user_uids = sorted(data["result"], key=lambda x: x["level"], reverse=True)
-    users = await client.get_friend_info([i["uid"] for i in user_uids[:10]])
-    for user in users["friends"]:
-        print(  # noqa: T201
-            f"""
-{user["nickName"]}#{user["nickNumber"]} ({user["uid"]}) Lvl {user["level"]}
-Current stage: {user["mainStageProgress"]} | Characters: {user["charCnt"]} | Secretery: {user["secretary"]}
-Playing since: {datetime.datetime.fromtimestamp(user["registerTs"], tz=datetime.timezone.utc).isoformat()}
-Last Online: {datetime.datetime.fromtimestamp(user["lastOnlineTime"], tz=datetime.timezone.utc).isoformat()}
-Support Characters: {", ".join(
-f'{i["charId"]} E{i["evolvePhase"]}L{i["level"]} S{i["skillIndex"]+1}M{i["skills"][i["skillIndex"]]["specializeLevel"]}'
-for i in user["assistCharList"] if i
-)}
-        """.strip()
-            + "\n",
-        )
+    if args.nickname:
+        users = await client.search_player(args.nickname, limit=10)
+    else:
+        users = await client.get_friends()
+        print("Friends:", end="\n\n")
+
+    for user in users:
+        print(f"{user.nickname}#{user.nick_number} ({user.uid}) Lvl {user.level}")
+        print(f"Current stage: {user.main_stage_progress} | Characters: {user.char_cnt} | Secretery: {user.secretary}")
+        print(f"Playing since: {user.register_ts.isoformat()}")
+        print(f"Last Online: {user.last_online_time.isoformat()}")
+
+        print("Support Operators: ", end="")
+        for char in user.assist_char_list:
+            if not char:
+                continue
+            print(f"{char.char_id} E{char.evolve_phase}L{char.level}", end="")
+            if char.skills:
+                print(f" S{char.skill_index+1}M{char.skills[char.skill_index].specialize_level}", end="")
+
+            print("   ", end="")
+
+        print("\n")
 
 
 if __name__ == "__main__":

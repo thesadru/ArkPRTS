@@ -5,6 +5,9 @@ import typing
 import uuid
 
 import aiohttp
+import pydantic
+
+from . import models
 
 __all__ = ("Client",)
 
@@ -223,7 +226,11 @@ class Client:
         print(f"Channel UID: {channel_uid} Token: {token}")  # noqa: T201
         print(f'Usage: client.login_with_token("{channel_uid}", "{token}")')  # noqa: T201
 
-    async def get_data(self) -> typing.Any:
+    async def _bind_nickname(self, nickname: str) -> typing.Any:
+        """Bind a nickname. Required for new accounts."""
+        return await self.request("user/bindNickName", json={"nickName": nickname})
+
+    async def get_raw_data(self) -> typing.Any:
         """Get user data."""
         return await self.request("account/syncData", json={"platform": 1})
 
@@ -239,22 +246,43 @@ class Client:
             json={"type": type, "sortKeyList": sort_key, "param": param},
         )
 
-    async def get_friend_info(self, ids: typing.Sequence[str]) -> typing.Any:
+    async def get_raw_friend_info(self, ids: typing.Sequence[str]) -> typing.Any:
         """Get detailed player info. You don't need to be friends actually."""
         return await self.request("social/getFriendList", json={"idList": ids})
 
-    async def get_player_info(self, ids: typing.Sequence[str]) -> typing.Any:
+    async def get_raw_player_info(self, ids: typing.Sequence[str]) -> typing.Any:
         """Get player info."""
         return await self.request("social/searchPlayer", json={"idList": ids})
 
-    async def get_friends(self) -> typing.Any:
+    async def get_raw_friends(self) -> typing.Any:
         """Get friends."""
         return await self._get_social_sort_list(1, ["level", "infoShare"])
 
-    async def search_nickname(self, nickname: str, nicknumber: str = "") -> typing.Any:
+    async def get_raw_nicknamed(self, nickname: str, nicknumber: str = "") -> typing.Any:
         """Search for a nickname."""
         return await self._get_social_sort_list(0, ["level"], {"nickName": nickname, "nickNumber": nicknumber})
 
-    async def bind_nickname(self, nickname: str) -> typing.Any:
-        """Bind a nickname. Required for new accounts."""
-        return await self.request("user/bindNickName", json={"nickName": nickname})
+    async def search_player(
+        self,
+        nickname: str,
+        nicknumber: str = "",
+        *,
+        limit: typing.Optional[int] = None,
+    ) -> typing.Sequence[models.Player]:
+        """Search for a player and return a model."""
+        uid_data = await self.get_raw_nicknamed(nickname, nicknumber)
+        uids = sorted(uid_data["result"], key=lambda x: x["level"], reverse=True)[:limit]
+        data = await self.get_raw_friend_info([uid["uid"] for uid in uids])
+        return pydantic.parse_obj_as(typing.Sequence[models.Player], data["friends"])
+
+    async def get_friends(self, *, limit: typing.Optional[int] = None) -> typing.Sequence[models.Player]:
+        """Get friends and return a model."""
+        uid_data = await self.get_raw_friends()
+        uids = sorted(uid_data["result"], key=lambda x: x["level"], reverse=True)[:limit]
+        data = await self.get_raw_friend_info([uid["uid"] for uid in uids])
+        return pydantic.parse_obj_as(typing.Sequence[models.Player], data["friends"])
+
+    async def get_data(self) -> models.User:
+        """Get user sync data and return a model. Use raw data for more info."""
+        data = await self.get_raw_data()
+        return pydantic.parse_obj_as(models.User, data["user"])

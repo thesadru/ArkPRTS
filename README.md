@@ -21,7 +21,7 @@ async def main() -> None:
     # or client.login_with_token("123456", "abcdefg")
 
     data = await client.get_data()
-    print("Level: ", data["user"]["status"]["level"])
+    print("Level: ", data.status.level)
 ```
 
 There are unfortunately no models due to the sheer size of the returned data.

@@ -30,6 +30,7 @@ skip_covered = false
 sort = "cover"
 
 [tool.ruff]
+target-version = "py38"
 select = ["ALL"]
 # 120 from black and then a bit
 line-length = 130
@@ -40,6 +41,7 @@ line-length = 130
 # FBT: Boolean in positional function type (duck-typing)
 # SLF: Private member access
 # TCH: Not using TYPE_CHECKING (ugly)
+# UP: Update from 3.8 (we use it)
 # ANN10: Missing type annotation for self/cls (useless)
 # ANN401: Use of typing.Any (complicates)
 # B008: Do not perform function calls in argument defaults (pydantic)
@@ -64,6 +66,7 @@ ignore = [
   "FBT",
   "SLF",
   "TCH",
+  "UP",
   "ANN10",
   "ANN401",
   "B008",
@@ -90,6 +93,8 @@ unfixable = ["F401", "F841", "B007"]
 [tool.ruff.per-file-ignores]
 # F40: import (unused imports)
 "**/__init__.py" = ["F40"]
+# T201: use of print
+"**/__main__.py" = ["T201"]
 # D10: missing docstring (tests)
 # F841: unused variable (return values)
 # S10: hardcoded passwords (dummy values)
