@@ -7,7 +7,7 @@ import uuid
 import aiohttp
 import pydantic
 
-from . import models
+from . import errors, models
 
 __all__ = ("Client",)
 
@@ -18,15 +18,13 @@ HEADERS = {
     "Connection": "Keep-Alive",
 }
 
+# error codes: https://passport.arknights.global/app/getCode
+
 ASSET_SERVER = "https://ark-us-static-online.yo-star.com"
 CONF_SERVER = "https://ak-conf.arknights.global"
 PASSPORT_SERVER = "https://passport.arknights.global"
 GAME_SERVER = "https://gs.arknights.global:8443"
 AUTH_SERVER = "https://as.arknights.global"
-
-
-class ArkPrtsError(Exception):
-    """Base exception class for this library."""
 
 
 @dataclasses.dataclass
@@ -79,19 +77,19 @@ class Client:
                     data = await resp.json(content_type=None)
                 except TypeError as e:
                     resp.raise_for_status()
-                    raise ArkPrtsError(await resp.read()) from e
+                    raise errors.InvalidContentTypeError(await resp.text()) from e
 
                 if resp.status != 200:
-                    raise ArkPrtsError(data)
+                    raise errors.InvalidStatusError(resp.status, data)
                 if "result" in data and isinstance(data["result"], int) and data["result"] != 0:
-                    raise ArkPrtsError(data)
+                    raise errors.ArkPrtsError(data)
 
                 return data
 
     async def request(self, endpoint: str, *, method: str = "POST", **kwargs: typing.Any) -> typing.Any:
         """Make a request towards the game server."""
         if self.uid is None or self.secret is None:
-            raise ArkPrtsError("Not logged-in")
+            raise errors.NotLoggedInError("Not logged in.")
 
         headers = {
             "secret": self.secret,
