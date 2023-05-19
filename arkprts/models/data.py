@@ -7,8 +7,10 @@ import typing
 
 import pydantic
 
+from . import base
 
-class Avatar(pydantic.BaseModel):
+
+class Avatar(base.BaseModel):
     """User display avatar."""
 
     type: typing.Literal["ASSISTANT", "ICON", "DEFAULT"] = "DEFAULT"
@@ -17,7 +19,7 @@ class Avatar(pydantic.BaseModel):
     """Avatar ID. For example a skin ID."""
 
 
-class Status(pydantic.BaseModel):
+class Status(base.BaseModel):
     """General user data."""
 
     nickname: str = pydantic.Field(alias="nickName")
@@ -86,13 +88,13 @@ class Status(pydantic.BaseModel):
     """ID of the secretary operator."""
     secretary_skin_id: str = pydantic.Field(alias="secretarySkinId")
     """ID of the secretary operator's skin."""
-    global_voice_lan: str = pydantic.Field(alias="globalVoiceLan")
+    global_voice_lan: typing.Optional[str] = pydantic.Field(None, alias="globalVoiceLan")
     """Default voice-over language."""
     avatar: Avatar
     """Selected avatar."""
 
 
-class SquadSlot(pydantic.BaseModel):
+class SquadSlot(base.BaseModel):
     """Squad slot."""
 
     char_inst_id: int = pydantic.Field(alias="charInstId")
@@ -103,7 +105,7 @@ class SquadSlot(pydantic.BaseModel):
     """Currently equipped module ID."""
 
 
-class Squads(pydantic.BaseModel):
+class Squads(base.BaseModel):
     """Operator squad data."""
 
     squad_id: str = pydantic.Field(alias="squadId")
@@ -114,7 +116,7 @@ class Squads(pydantic.BaseModel):
     """Equipped operators."""
 
 
-class Skill(pydantic.BaseModel):
+class Skill(base.BaseModel):
     """Operator skill data."""
 
     skill_id: str = pydantic.Field(alias="skillId")
@@ -123,13 +125,25 @@ class Skill(pydantic.BaseModel):
     """Whether the skill is unlocked."""
     state: bool
     """IDK."""
-    specialize_lvl: int = pydantic.Field(alias="specializeLvl")
+    specialize_level: int = pydantic.Field(alias="specializeLevel")
     """Skill mastery level."""
-    complete_upgrade_time: datetime.datetime = pydantic.Field(alias="completeUpgradeTime")
-    """IDK. Time left until skill upgrade is complete."""
+    complete_upgrade_time: typing.Optional[datetime.datetime] = pydantic.Field(alias="completeUpgradeTime")
+    """IDK. Time left until skill upgrade is complete. Is -1 if not upgrading."""
+
+    @pydantic.validator("complete_upgrade_time", pre=True)  # pyright: ignore[reportUnknownMemberType]
+    def _complete_upgrade_time(cls, v: int) -> typing.Optional[int]:
+        if v == -1:
+            return None
+
+        return v
+
+    @property
+    def static(self) -> base.DDict:
+        """Static data for this skill."""
+        return self.client.gamedata.get_skill(self.skill_id)
 
 
-class Equip(pydantic.BaseModel):
+class Equip(base.BaseModel):
     """Operator module data."""
 
     hide: bool
@@ -140,7 +154,7 @@ class Equip(pydantic.BaseModel):
     """Module level."""
 
 
-class Character(pydantic.BaseModel):
+class Character(base.BaseModel):
     """Operator data."""
 
     inst_id: int = pydantic.Field(alias="instId")
@@ -171,24 +185,29 @@ class Character(pydantic.BaseModel):
     """Currently equipped module."""
     equip: typing.Mapping[str, Equip]
 
+    @property
+    def static(self) -> base.DDict:
+        """Static data for this operator."""
+        return self.client.gamedata.get_operator(self.char_id)
 
-class CharGroup(pydantic.BaseModel):
+
+class CharGroup(base.BaseModel):
     """Operator group data."""
 
     favor_point: int = pydantic.Field(alias="favorPoint")
     """Operator trust."""
 
 
-class Troops(pydantic.BaseModel):
+class Troops(base.BaseModel):
     """Operator data."""
 
     cur_char_inst_id: int = pydantic.Field(alias="curCharInstId")
     """Amount of owned operators."""
     cur_squad_count: int = pydantic.Field(alias="curSquadCount")
     """Amount of squads. Should be always 4."""
-    squads: typing.Mapping[str, Squads]
+    squads: typing.Mapping[int, Squads]
     """Squad data."""
-    chars: typing.Mapping[str, Character]
+    chars: typing.Mapping[int, Character]
     """Operator data."""
     char_group: typing.Mapping[str, CharGroup] = pydantic.Field(alias="charGroup")
     """Operator group data."""
@@ -198,16 +217,16 @@ class Troops(pydantic.BaseModel):
     """IDK."""
 
 
-class Skins(pydantic.BaseModel):
+class Skins(base.BaseModel):
     """Operator skin data."""
 
     character_skins: typing.Mapping[str, bool] = pydantic.Field(alias="characterSkins")
     """Owned skins."""
-    skin_ts: datetime.datetime = pydantic.Field(alias="skinTs")
-    """When the skin was obtained."""
+    skin_ts: typing.Mapping[str, datetime.datetime] = pydantic.Field(alias="skinTs")
+    """When the skins were obtained."""
 
 
-class ConsumableExpire(pydantic.BaseModel):
+class ConsumableExpire(base.BaseModel):
     """Consumable expiration data."""
 
     ts: datetime.datetime
@@ -216,7 +235,7 @@ class ConsumableExpire(pydantic.BaseModel):
     """Amount of consumables."""
 
 
-class User(pydantic.BaseModel):
+class User(base.BaseModel):
     """User sync data. Not fully modeled."""
 
     status: Status
@@ -225,7 +244,10 @@ class User(pydantic.BaseModel):
     """Operator data."""
     skin: Skins
     """Operator skin data."""
-    cosumable: typing.Mapping[str, typing.Mapping[int, ConsumableExpire]]
+    cosumable: typing.Mapping[str, typing.Mapping[int, ConsumableExpire]] = {}
     """Consumable data."""
-    inventory: typing.Mapping[int, int]
-    """Inventory data. Item ID to amount."""
+    inventory: typing.Mapping[str, int]
+    """Inventory data. Item ID to amount.
+
+    To access the static data for an item, use `client.gamedata.get_item(item_id)`.
+    """

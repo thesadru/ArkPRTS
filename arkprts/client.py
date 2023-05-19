@@ -1,15 +1,21 @@
 """Arknights client."""
+from __future__ import annotations
+
+import asyncio
 import dataclasses
 import json
+import logging
 import typing
 import uuid
 
 import aiohttp
-import pydantic
 
 from . import errors, models
+from .gamedata import GameData
 
 __all__ = ("Client",)
+
+logger: logging.Logger = logging.getLogger("arkprts")
 
 HEADERS = {
     "Content-Type": "application/json",
@@ -46,26 +52,34 @@ class Client:
     """Arknights client."""
 
     config: Config
-    proxy: typing.Optional[str] = None
+    pure: bool
+    gamedata: GameData
+    proxy: str | None = None
 
-    uid: typing.Optional[str]
-    secret: typing.Optional[str]
+    uid: str | None
+    secret: str | None
 
     _seqnum: int
 
-    def __init__(self, **config: object) -> None:
+    def __init__(self, *, pure: bool = False, **config: object) -> None:
+        """Initialize the client.
+
+        If `pure` is set to `True`, the client will not attempt to download game data.
+        """
         self.config = Config(**config)
 
         self.uid = None
         self.secret = None
         self._seqnum = 1
+        self.pure = pure
+        self.gamedata = GameData()
 
     async def _request(
         self,
         method: str,
         url: str,
         *,
-        headers: typing.Optional[typing.Mapping[str, str]] = None,
+        headers: typing.Mapping[str, str] | None = None,
         **kwargs: typing.Any,
     ) -> typing.Any:
         """Make an arbitrary request."""
@@ -91,6 +105,7 @@ class Client:
         if self.uid is None or self.secret is None:
             raise errors.NotLoggedInError("Not logged in.")
 
+        logger.debug("Sending request #%d to %s.", self._seqnum, endpoint)
         headers = {
             "secret": self.secret,
             "seqnum": str(self._seqnum),
@@ -102,6 +117,7 @@ class Client:
 
     async def _load_network_config(self) -> None:
         """Get network config."""
+        logger.debug("Loading network config.")
         data = await self._request("GET", f"{CONF_SERVER}/config/prod/official/network_config")
         content = json.loads(data["content"])
         self.config.sign = data["sign"]
@@ -110,20 +126,27 @@ class Client:
 
     async def _load_version_config(self) -> None:
         """Get version config."""
+        logger.debug("Loading version config.")
         # for CN it's "/config/prod/official/Android/version"
         data = await self._request("GET", f"{ASSET_SERVER}/assetbundle/official/Android/version")
         self.config.assets_version = data["resVersion"]
         self.config.client_version = data["clientVersion"]
 
-    async def _initialize_config(self) -> None:
-        """Initialize config."""
+    async def start(self) -> None:
+        """Initialize config and download gamedata."""
+        tasks: list[typing.Awaitable[None]] = []
         if not self.config.network_version:
-            await self._load_network_config()
+            tasks.append(self._load_network_config())
         if not self.config.assets_version:
-            await self._load_version_config()
+            tasks.append(self._load_version_config())
+        if not self.pure:
+            tasks.append(self.gamedata.download_gamedata())
+
+        await asyncio.gather(*tasks)
 
     async def _get_access_token(self, channel_uid: str, yostar_token: str) -> str:
         """Get an access token from a channel uid and yostar token."""
+        logger.debug("Getting access token.")
         body = {
             "platform": "android",
             "uid": channel_uid,
@@ -136,6 +159,7 @@ class Client:
 
     async def _get_u8_token(self, channel_uid: str, access_token: str) -> str:
         """Get an arknights uid and u8 token from a channel uid and access token."""
+        logger.debug("Getting u8 token.")
         body = {
             "appId": "1",
             "channelId": "3",
@@ -154,7 +178,8 @@ class Client:
 
     async def _get_secret(self, u8_token: str) -> str:
         """Get a secret from a u8 uid and token."""
-        await self._initialize_config()
+        logger.debug("Getting secret.")
+        await self.start()
         body = {
             "assetsVersion": self.config.assets_version,
             "clientVersion": self.config.client_version,
@@ -173,6 +198,7 @@ class Client:
 
     async def _request_yostar_auth(self, email: str) -> None:
         """Request to log in with a yostar account."""
+        logger.debug("Requesting yostar auth.")
         body = {
             "platform": "android",
             "account": email,
@@ -180,8 +206,9 @@ class Client:
         }
         await self._request("POST", f"{PASSPORT_SERVER}/account/yostar_auth_request", json=body)
 
-    async def _submit_yostar_auth(self, email: str, code: str) -> typing.Tuple[str, str]:
+    async def _submit_yostar_auth(self, email: str, code: str) -> tuple[str, str]:
         """Submit a yostar auth code and receieve a yostar uid and temporary token."""
+        logger.debug("Submitting yostar auth.")
         body = {
             "account": email,
             "code": code,
@@ -189,8 +216,9 @@ class Client:
         data = await self._request("POST", f"{PASSPORT_SERVER}/account/yostar_auth_submit", json=body)
         return data["yostar_uid"], data["yostar_token"]
 
-    async def _get_yostar_token(self, email: str, yostar_uid: str, token: str) -> typing.Tuple[str, str]:
+    async def _get_yostar_token(self, email: str, yostar_uid: str, token: str) -> tuple[str, str]:
         """Get a channel uid and yostar token from a yostar uid and temporary token."""
+        logger.debug("Getting yostar token.")
         body = {
             "yostar_token": token,
             "deviceId": self.config.device_id,
@@ -207,8 +235,9 @@ class Client:
         access_token = await self._get_access_token(channel_uid, yostar_token)
         u8_token = await self._get_u8_token(channel_uid, access_token)
         await self._get_secret(u8_token)
+        logger.info("Logged in with %s.", channel_uid)
 
-    async def login_with_email(self, email: typing.Optional[str] = None) -> None:
+    async def login_with_email(self, email: str | None = None) -> None:
         """Login with a yostar account. Uses stdin."""
         if not email:
             email = input("Enter email: ")
@@ -265,22 +294,22 @@ class Client:
         nickname: str,
         nicknumber: str = "",
         *,
-        limit: typing.Optional[int] = None,
+        limit: int | None = None,
     ) -> typing.Sequence[models.Player]:
         """Search for a player and return a model."""
         uid_data = await self.get_raw_nicknamed(nickname, nicknumber)
         uids = sorted(uid_data["result"], key=lambda x: x["level"], reverse=True)[:limit]
         data = await self.get_raw_friend_info([uid["uid"] for uid in uids])
-        return pydantic.parse_obj_as(typing.Sequence[models.Player], data["friends"])
+        return [models.Player(client=self, **i) for i in data["friends"]]
 
-    async def get_friends(self, *, limit: typing.Optional[int] = None) -> typing.Sequence[models.Player]:
+    async def get_friends(self, *, limit: int | None = None) -> typing.Sequence[models.Player]:
         """Get friends and return a model."""
         uid_data = await self.get_raw_friends()
         uids = sorted(uid_data["result"], key=lambda x: x["level"], reverse=True)[:limit]
         data = await self.get_raw_friend_info([uid["uid"] for uid in uids])
-        return pydantic.parse_obj_as(typing.Sequence[models.Player], data["friends"])
+        return [models.Player(client=self, **i) for i in data["friends"]]
 
     async def get_data(self) -> models.User:
         """Get user sync data and return a model. Use raw data for more info."""
         data = await self.get_raw_data()
-        return pydantic.parse_obj_as(models.User, data["user"])
+        return models.User(client=self, **data["user"])

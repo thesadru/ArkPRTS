@@ -7,8 +7,10 @@ import typing
 
 import pydantic
 
+from . import base
 
-class Avatar(pydantic.BaseModel):
+
+class Avatar(base.BaseModel):
     """User display avatar."""
 
     type: typing.Literal["ASSISTANT", "ICON", "DEFAULT"] = "DEFAULT"
@@ -17,7 +19,7 @@ class Avatar(pydantic.BaseModel):
     """Avatar ID. For example a skin ID."""
 
 
-class Skill(pydantic.BaseModel):
+class Skill(base.BaseModel):
     """Skill of a character."""
 
     skill_id: str = pydantic.Field(alias="skillId")
@@ -28,11 +30,23 @@ class Skill(pydantic.BaseModel):
     """IDK. Skill state."""
     specialize_level: int = pydantic.Field(alias="specializeLevel")
     """Skill mastery level."""
-    complete_upgrade_time: int = pydantic.Field(alias="completeUpgradeTime")
-    """IDK. Time left until skill upgrade is complete."""
+    complete_upgrade_time: typing.Optional[datetime.datetime] = pydantic.Field(alias="completeUpgradeTime")
+    """IDK. Time left until skill upgrade is complete. Is -1 if not upgrading."""
+
+    @pydantic.validator("complete_upgrade_time", pre=True)  # pyright: ignore[reportUnknownMemberType]
+    def _complete_upgrade_time(cls, v: int) -> typing.Optional[int]:
+        if v == -1:
+            return None
+
+        return v
+
+    @property
+    def static(self) -> base.DDict:
+        """Static data for this skill."""
+        return self.client.gamedata.get_skill(self.skill_id)
 
 
-class UniEquip(pydantic.BaseModel):
+class UniEquip(base.BaseModel):
     """Equipped modules."""
 
     hide: bool
@@ -43,7 +57,7 @@ class UniEquip(pydantic.BaseModel):
     """Module level."""
 
 
-class AssistChar(pydantic.BaseModel):
+class AssistChar(base.BaseModel):
     """Publicly visible operator info."""
 
     char_id: str = pydantic.Field(alias="charId")
@@ -71,8 +85,13 @@ class AssistChar(pydantic.BaseModel):
     equip: typing.Mapping[str, UniEquip]
     """Equipped modules. Module ID to module info."""
 
+    @property
+    def static(self) -> base.DDict:
+        """Static data for this operator."""
+        return self.client.gamedata.get_operator(self.char_id)
 
-class PlacedMedal(pydantic.BaseModel):
+
+class PlacedMedal(base.BaseModel):
     """A single medal on a board."""
 
     id: str
@@ -80,15 +99,20 @@ class PlacedMedal(pydantic.BaseModel):
     pos: typing.Tuple[int, int]
     """Medal position on the board."""
 
+    @property
+    def static(self) -> base.DDict:
+        """Static data for this medal."""
+        return self.client.gamedata.get_medal(self.id)
 
-class MedalBoardCustom(pydantic.BaseModel):
+
+class MedalBoardCustom(base.BaseModel):
     """Custom medal board layout."""
 
     layout: typing.Sequence[PlacedMedal]
     """Medals on the board."""
 
 
-class MedalBoardTemplate(pydantic.BaseModel):
+class MedalBoardTemplate(base.BaseModel):
     """Template medal board layout."""
 
     group_id: str = pydantic.Field(alias="groupId")
@@ -96,8 +120,13 @@ class MedalBoardTemplate(pydantic.BaseModel):
     medal_list: typing.Sequence[str] = pydantic.Field(alias="medalList")
     """Medal IDs on the board."""
 
+    @property
+    def static(self) -> base.DDict:
+        """Static data for this medal board."""
+        return self.client.gamedata.get_medal_group(self.group_id)
 
-class MedalBoard(pydantic.BaseModel):
+
+class MedalBoard(base.BaseModel):
     """Medal board info."""
 
     type: typing.Literal["CUSTOM", "TEMPLATE", "EMPTY"]
@@ -108,7 +137,7 @@ class MedalBoard(pydantic.BaseModel):
     """Template medal board layout."""
 
 
-class PartialPlayer(pydantic.BaseModel):
+class PartialPlayer(base.BaseModel):
     """Partial player info from search."""
 
     nickname: str = pydantic.Field(alias="nickName")
@@ -155,10 +184,10 @@ class Player(PartialPlayer):
     team_v2: typing.Mapping[str, int] = pydantic.Field(alias="teamV2")
     """Amount of characters owned in each faction."""
     board: typing.Sequence[str]
-    """IDK. Factions will full trust. Shows up blue in-game."""
+    """IDK. Factions with full trust. Shows up blue in-game."""
     info_share: datetime.datetime = pydantic.Field(alias="infoShare")
     """IDK."""
     recent_visited: bool = pydantic.Field(alias="recentVisited")
-    """Whether the player has been recently visited."""
+    """IDK."""
     info_share_visited: typing.Optional[int] = pydantic.Field(None, alias="infoShareVisited")
     """IDK."""

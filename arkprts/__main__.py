@@ -28,8 +28,15 @@ async def main() -> None:
         print("Friends:", end="\n\n")
 
     for user in users:
+        if user.level < 5:
+            continue
+
         print(f"{user.nickname}#{user.nick_number} ({user.uid}) Lvl {user.level}")
-        print(f"Current stage: {user.main_stage_progress} | Characters: {user.char_cnt} | Secretery: {user.secretary}")
+        print(f"Resume: {user.resume}")
+        print(
+            f"Current stage: {user.main_stage_progress} | Characters: {user.char_cnt} | Furniture: {user.furn_cnt} | "
+            f"Secretary: {client.gamedata.get_operator(user.secretary).name}",
+        )
         print(f"Playing since: {user.register_ts.isoformat()}")
         print(f"Last Online: {user.last_online_time.isoformat()}")
 
@@ -37,11 +44,11 @@ async def main() -> None:
         for char in user.assist_char_list:
             if not char:
                 continue
-            print(f"{char.char_id} E{char.evolve_phase}L{char.level}", end="")
+            print(f"{char.static.name} E{char.evolve_phase}L{char.level}", end="")
             if char.skills:
                 print(f" S{char.skill_index+1}M{char.skills[char.skill_index].specialize_level}", end="")
 
-            print("   ", end="")
+            print("  ", end="")
 
         print("\n")
 

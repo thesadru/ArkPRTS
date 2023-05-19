@@ -1,5 +1,5 @@
 [project]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 
 [build-system]
 requires = ["setuptools"]
@@ -41,7 +41,7 @@ line-length = 130
 # FBT: Boolean in positional function type (duck-typing)
 # SLF: Private member access
 # TCH: Not using TYPE_CHECKING (ugly)
-# UP: Update from 3.8 (we use it)
+# TD: TODO comment conventions
 # ANN10: Missing type annotation for self/cls (useless)
 # ANN401: Use of typing.Any (complicates)
 # B008: Do not perform function calls in argument defaults (pydantic)
@@ -66,7 +66,7 @@ ignore = [
   "FBT",
   "SLF",
   "TCH",
-  "UP",
+  "TD",
   "ANN10",
   "ANN401",
   "B008",
