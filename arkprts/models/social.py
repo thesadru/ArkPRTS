@@ -163,6 +163,15 @@ class PartialPlayer(base.BaseModel):
     medal_board: MedalBoard = pydantic.Field(alias="medalBoard")
     """Medal board."""
 
+    @pydantic.validator("assist_char_list", pre=True, each_item=True)  # pyright: ignore[reportUnknownMemberType]
+    def _fix_amiya(cls, v: typing.Any) -> typing.Any:
+        """Flatten amiya to only keep her guard form."""
+        if v and v.get("tmpl"):
+            current = v["tmpl"][v["currentTmpl"]]
+            v.update(current)
+
+        return v
+
 
 class Player(PartialPlayer):
     """Player info."""

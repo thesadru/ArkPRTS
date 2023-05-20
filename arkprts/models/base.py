@@ -29,12 +29,9 @@ def _set_recursively(obj: typing.Any, name: str, value: typing.Any) -> None:
             _set_recursively(item, name, value)
 
 
-def _to_snake_case(string: str) -> str:
-    """Convert camelCase to snake_case."""
-    return "".join(
-        ("_" if i and string[i].isupper() and not string[i : i + 2].isupper() else "") + x.lower()
-        for i, x in enumerate(string)
-    )
+def _to_camel_case(string: str) -> str:
+    """Convert snake_case to camelCase."""
+    return "".join(x.title() if i else x for i, x in enumerate(string.split("_")))
 
 
 class BaseModel(pydantic.BaseModel):
@@ -60,6 +57,7 @@ class DList(collections.UserList[typing.Any]):
 
     def __getitem__(self, key: typing.Any) -> typing.Any:
         item = super().__getitem__(key)
+
         if isinstance(item, dict):
             item = DDict(item)  # pyright: ignore[reportUnknownArgumentType]
         elif isinstance(item, list):
@@ -72,7 +70,11 @@ class DDict(collections.UserDict[str, typing.Any]):
     """Dot-accessed dictionary."""
 
     def __getitem__(self, key: typing.Any) -> typing.Any:
-        item = super().__getitem__(_to_snake_case(key))
+        try:
+            item = super().__getitem__(key)
+        except KeyError:
+            item = super().__getitem__(_to_camel_case(key))
+
         if isinstance(item, dict):
             item = DDict(item)  # pyright: ignore[reportUnknownArgumentType]
         elif isinstance(item, list):

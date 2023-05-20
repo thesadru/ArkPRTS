@@ -216,6 +216,16 @@ class Troops(base.BaseModel):
     addon: typing.Any
     """IDK."""
 
+    @pydantic.validator("chars", pre=True)  # pyright: ignore[reportUnknownMemberType]
+    def _fix_amiya(cls, value: typing.Any) -> typing.Any:
+        """Flatten amiya to only keep her guard form."""
+        for v in value.values():
+            if v and v.get("tmpl"):
+                current = v["tmpl"][v["currentTmpl"]]
+                v.update(current)
+
+        return value
+
 
 class Skins(base.BaseModel):
     """Operator skin data."""
