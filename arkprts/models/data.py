@@ -31,7 +31,7 @@ class Status(base.BaseModel):
     exp: int
     """Player experience."""
     social_point: int = pydantic.Field(alias="socialPoint")
-    """IDK."""
+    """Credit shop credits."""
     gacha_ticket: int = pydantic.Field(alias="gachaTicket")
     """Amount of single headhunting permits."""
     ten_gacha_ticket: int = pydantic.Field(alias="tenGachaTicket")
@@ -49,15 +49,15 @@ class Status(base.BaseModel):
     buy_ap_remain_times: int = pydantic.Field(alias="buyApRemainTimes")
     """Remaining pulls until guaranteed 5 star operator."""
     ap_limit_up_flag: bool = pydantic.Field(alias="apLimitUpFlag")
-    """Whether the guaranteed 5 star has been pulled."""
+    """IDK. Ap refers to sanity."""
     uid: str
     """User ID."""
     flags: typing.Mapping[str, bool]
     """Completed stories."""
     ap: int
-    """Pulls made on the current banner."""
+    """Current sanity."""
     max_ap: int = pydantic.Field(alias="maxAp")
-    """IDK."""
+    """Max sanity."""
     pay_diamond: int = pydantic.Field(alias="payDiamond")
     """Bough originium prime."""
     free_diamond: int = pydantic.Field(alias="freeDiamond")
@@ -69,7 +69,7 @@ class Status(base.BaseModel):
     practice_ticket: int = pydantic.Field(alias="practiceTicket")
     """Amount of training permits."""
     last_refresh_ts: datetime.datetime = pydantic.Field(alias="lastRefreshTs")
-    """IDK."""
+    """IDK. When sanity was last incremented."""
     last_ap_add_time: datetime.datetime = pydantic.Field(alias="lastApAddTime")
     """IDK."""
     main_stage_progress: str = pydantic.Field(alias="mainStageProgress")
@@ -92,6 +92,25 @@ class Status(base.BaseModel):
     """Default voice-over language."""
     avatar: Avatar
     """Selected avatar."""
+
+    @property
+    def basic_item_inventory(self) -> typing.Mapping[str, int]:
+        """Basic item inventory. These are not shown in the inventory object."""
+        return {
+            "SOCIAL_PT": self.social_point,
+            "AP_GAMEPLAY": self.ap,
+            "4001": self.gold,
+            "4002": self.pay_diamond + self.free_diamond,
+            "4003": self.diamond_shard,
+            "4004": self.hgg_shard,
+            "4005": self.lgg_shard,
+            "5001": self.exp,
+            "6001": self.practice_ticket,
+            "7001": self.recruit_license,
+            "7002": self.instant_finish_ticket,
+            "7003": self.gacha_ticket,
+            "7004": self.ten_gacha_ticket,
+        }
 
 
 class SquadSlot(base.BaseModel):
@@ -181,9 +200,12 @@ class Character(base.BaseModel):
     """Operator skills."""
     voice_lan: str = pydantic.Field(alias="voiceLan")
     """Operator voice-over language."""
-    current_equip: typing.Optional[str] = None
+    current_equip: typing.Optional[str] = pydantic.Field(alias="currentEquip")
     """Currently equipped module."""
     equip: typing.Mapping[str, Equip]
+    """Operator modules."""
+    star_mark: bool = pydantic.Field(False, alias="starMark")
+    """Whether the operator is marked as favorite."""
 
     @property
     def static(self) -> base.DDict:
@@ -213,7 +235,7 @@ class Troops(base.BaseModel):
     """Additional operator data."""
     char_mission: typing.Mapping[str, typing.Mapping[str, bool]] = pydantic.Field(alias="charMission")
     """Special operation missions."""
-    addon: base.DDict
+    addon: base.DDict = pydantic.Field(default_factory=base.DDict)
     """IDK."""
 
     @pydantic.validator("chars", pre=True)  # pyright: ignore[reportUnknownMemberType]
@@ -250,13 +272,13 @@ class AssistChar(base.BaseModel):
 class Social(base.BaseModel):
     """Social data."""
 
-    assist_char_list: typing.Sequence[AssistChar] = pydantic.Field(alias="assistCharList")
+    assist_char_list: typing.Sequence[typing.Optional[AssistChar]] = pydantic.Field(alias="assistCharList")
     """Support operators."""
     yesterday_reward: base.DDict = pydantic.Field(alias="yesterdayReward")
     """IDK. Clue exchange data."""
     y_crisis_ss: typing.Union[str, typing.Any] = pydantic.Field(alias="yCrisisSs")
     """IDK."""
-    medal_board: base.DDict = pydantic.Field(alias="medalBoard")
+    medal_board: base.DDict = pydantic.Field(default_factory=base.DDict, alias="medalBoard")
     """Medal board."""
 
 
@@ -280,7 +302,7 @@ class User(base.BaseModel):
     """Operator skin data."""
     social: Social
     """Data related to friends."""
-    cosumable: typing.Mapping[str, typing.Mapping[int, ConsumableExpire]] = {}
+    consumable: typing.Mapping[str, typing.Mapping[int, ConsumableExpire]] = {}
     """Consumable data."""
     inventory: typing.Mapping[str, int]
     """Inventory data. Item ID to amount.

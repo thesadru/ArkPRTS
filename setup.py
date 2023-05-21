@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="arkprts",
-    version="0.1.2",
+    version="0.1.3",
     description="Arknights python wrapper.",
     url="https://github.com/thesadru/arkprts",
     packages=find_packages(exclude=["tests", "tests.*"]),
