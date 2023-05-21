@@ -78,7 +78,7 @@ class AssistChar(base.BaseModel):
     """Operator potential. Starts at 0."""
     level: int
     """Operator level."""
-    crisis_record: typing.Any = pydantic.Field(alias="crisisRecord")
+    crisis_record: base.DDict = pydantic.Field(alias="crisisRecord")
     """IDK. selectedCrisis is used for contingency contracts elsewhere."""
     current_equip: typing.Optional[str] = pydantic.Field(alias="currentEquip")
     """ID of the currently equipped module."""

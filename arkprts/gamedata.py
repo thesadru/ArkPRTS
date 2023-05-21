@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import os.path
 import pathlib
 import re
 import tarfile
 import tempfile
+import time
 import typing
 
 import aiohttp
@@ -93,7 +95,16 @@ class GameData:
 
     async def download_gamedata(self, allow: str | None = None, *, force: bool = False) -> None:
         """Download game data."""
-        commit = await self._get_commit()
+        if not force and self.commit_file.exists() and time.time() - self.commit_file.stat().st_mtime < 60 * 60 * 6:
+            logger.debug("Game data was updated recently, skipping download")
+            return
+
+        try:
+            commit = await self._get_commit()
+        except aiohttp.ClientResponseError:
+            logger.warning("Failed to get game data commit, skipping download", exc_info=True)
+            return
+
         if not force and self.commit_file.exists() and self.commit_file.read_text() == commit:
             logger.debug("Game data is up to date [%s]", commit)
             return
@@ -107,7 +118,10 @@ class GameData:
         if tarball_commit not in commit:
             raise RuntimeError(f"Tarball commit {tarball_commit} does not match github commit {commit}")
 
+        # sometimes the contents are identical, we still want to update the mtime
         self.commit_file.write_text(commit)
+        os.utime(self.commit_file, (time.time(), time.time()))
+
         logger.info("Downloaded game data")
 
     def _get_data(self, name: str, *, server: str | None = None) -> models.DDict:
@@ -128,36 +142,36 @@ class GameData:
 
         return models.DDict(data)
 
-    def _get_excel(self, name: str, *, server: str | None = None) -> models.DDict:
-        """Get an excel file."""
+    def get_excel(self, name: str, *, server: str | None = None) -> models.DDict:
+        """Get an excel table file."""
         return self._get_data(f"excel/{name}", server=server)
 
     def get_operator(self, id: str, *, server: str | None = None) -> models.DDict:
         """Get an operator."""
-        data = self._get_excel("character_table", server=server)
+        data = self.get_excel("character_table", server=server)
         return data[id]
 
     def get_item(self, id: str, *, server: str | None = None) -> models.DDict:
         """Get an item."""
-        data = self._get_excel("item_table", server=server)
+        data = self.get_excel("item_table", server=server)
         return data["items"][id]
 
     def get_medal(self, id: str, *, server: str | None = None) -> models.DDict:
         """Get a medal."""
-        data = self._get_excel("medal_table", server=server)
+        data = self.get_excel("medal_table", server=server)
         return data["medalList"][id]
 
     def get_medal_group(self, id: str, *, server: str | None = None) -> models.DDict:
         """Get a medal group. Way too specific probably."""
-        data = self._get_excel("medal_table", server=server)
+        data = self.get_excel("medal_table", server=server)
         return next(i for i in data["medalTypeData"]["activityMedal"]["groupData"] if i["groupId"] == id)
 
     def get_skill(self, id: str, *, server: str | None = None) -> models.DDict:
         """Get a skill."""
-        data = self._get_excel("skill_table", server=server)
+        data = self.get_excel("skill_table", server=server)
         return data[id]
 
     def get_module(self, id: str, *, server: str | None = None) -> models.DDict:
         """Get a module."""
-        data = self._get_excel("uniequip_table", server=server)
+        data = self.get_excel("uniequip_table", server=server)
         return data["equipDict"][id]

@@ -65,6 +65,10 @@ class DList(collections.UserList[typing.Any]):
 
         return item
 
+    @classmethod
+    def __get_validators__(cls) -> typing.Iterator[typing.Callable[..., typing.Any]]:
+        yield lambda i: cls(i)
+
 
 class DDict(collections.UserDict[str, typing.Any]):
     """Dot-accessed dictionary."""
@@ -84,3 +88,7 @@ class DDict(collections.UserDict[str, typing.Any]):
 
     def __getattr__(self, key: str) -> typing.Any:
         return self[key]
+
+    @classmethod
+    def __get_validators__(cls) -> typing.Iterator[typing.Callable[..., typing.Any]]:
+        yield lambda i: cls(i)

@@ -210,10 +210,10 @@ class Troops(base.BaseModel):
     chars: typing.Mapping[int, Character]
     """Operator data."""
     char_group: typing.Mapping[str, CharGroup] = pydantic.Field(alias="charGroup")
-    """Operator group data."""
+    """Additional operator data."""
     char_mission: typing.Mapping[str, typing.Mapping[str, bool]] = pydantic.Field(alias="charMission")
     """Special operation missions."""
-    addon: typing.Any
+    addon: base.DDict
     """IDK."""
 
     @pydantic.validator("chars", pre=True)  # pyright: ignore[reportUnknownMemberType]
@@ -236,6 +236,30 @@ class Skins(base.BaseModel):
     """When the skins were obtained."""
 
 
+class AssistChar(base.BaseModel):
+    """Assist operator data."""
+
+    char_inst_id: int = pydantic.Field(alias="charInstId")
+    """Index of the operator."""
+    skill_index: int = pydantic.Field(alias="skillIndex")
+    """Index of the selected skill."""
+    current_equip: typing.Optional[str] = pydantic.Field(alias="currentEquip")
+    """Currently equipped module."""
+
+
+class Social(base.BaseModel):
+    """Social data."""
+
+    assist_char_list: typing.Sequence[AssistChar] = pydantic.Field(alias="assistCharList")
+    """Support operators."""
+    yesterday_reward: base.DDict = pydantic.Field(alias="yesterdayReward")
+    """IDK. Clue exchange data."""
+    y_crisis_ss: typing.Union[str, typing.Any] = pydantic.Field(alias="yCrisisSs")
+    """IDK."""
+    medal_board: base.DDict = pydantic.Field(alias="medalBoard")
+    """Medal board."""
+
+
 class ConsumableExpire(base.BaseModel):
     """Consumable expiration data."""
 
@@ -254,6 +278,8 @@ class User(base.BaseModel):
     """Operator data."""
     skin: Skins
     """Operator skin data."""
+    social: Social
+    """Data related to friends."""
     cosumable: typing.Mapping[str, typing.Mapping[int, ConsumableExpire]] = {}
     """Consumable data."""
     inventory: typing.Mapping[str, int]
