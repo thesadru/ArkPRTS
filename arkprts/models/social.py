@@ -26,8 +26,8 @@ class Skill(base.BaseModel):
     """Skill ID."""
     unlock: bool
     """Whether the skill is unlocked."""
-    state: bool
-    """IDK. Skill state."""
+    state: bool = pydantic.Field(repr=False)
+    """IDK. Always false."""
     specialize_level: int = pydantic.Field(alias="specializeLevel")
     """Skill mastery level."""
     complete_upgrade_time: typing.Optional[datetime.datetime] = pydantic.Field(alias="completeUpgradeTime")
@@ -43,7 +43,7 @@ class Skill(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this skill."""
-        return self.client.gamedata.get_skill(self.skill_id)
+        return self.client.gamedata.skill_table[self.skill_id]
 
 
 class UniEquip(base.BaseModel):
@@ -78,7 +78,7 @@ class AssistChar(base.BaseModel):
     """Operator potential. Starts at 0."""
     level: int
     """Operator level."""
-    crisis_record: base.DDict = pydantic.Field(alias="crisisRecord")
+    crisis_record: base.DDict = pydantic.Field(alias="crisisRecord", repr=False)
     """IDK. selectedCrisis is used for contingency contracts elsewhere."""
     current_equip: typing.Optional[str] = pydantic.Field(alias="currentEquip")
     """ID of the currently equipped module."""
@@ -88,7 +88,16 @@ class AssistChar(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this operator."""
-        return self.client.gamedata.get_operator(self.char_id)
+        return self.client.gamedata.character_table[self.char_id]
+
+    @pydantic.root_validator(pre=True)  # pyright: ignore[reportUnknownMemberType]
+    def _fix_amiya(cls, values: typing.Any) -> typing.Any:
+        """Flatten Amiya to only keep her guard form."""
+        if values and values.get("tmpl"):
+            current = values["tmpl"][values["currentTmpl"]]
+            values.update(current)
+
+        return values
 
 
 class PlacedMedal(base.BaseModel):
@@ -102,7 +111,7 @@ class PlacedMedal(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this medal."""
-        return self.client.gamedata.get_medal(self.id)
+        return self.client.gamedata.medal_table.medal_list[self.id]
 
 
 class MedalBoardCustom(base.BaseModel):
@@ -123,7 +132,8 @@ class MedalBoardTemplate(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this medal board."""
-        return self.client.gamedata.get_medal_group(self.group_id)
+        groups = self.client.gamedata.medal_table.medal_type_data.activity_medal.group_data
+        return next(i for i in groups if i.group_id == self.group_id)
 
 
 class MedalBoard(base.BaseModel):
@@ -152,7 +162,7 @@ class PartialPlayer(base.BaseModel):
     """Server name. Should always be Terra."""
     level: int
     """Player level."""
-    avatar_id: str = pydantic.Field(alias="avatarId")
+    avatar_id: str = pydantic.Field(alias="avatarId", repr=False)
     """IDK. Always 0."""
     avatar: typing.Optional[Avatar] = None
     """Selected avatar."""
@@ -162,15 +172,6 @@ class PartialPlayer(base.BaseModel):
     """Last online time."""
     medal_board: MedalBoard = pydantic.Field(alias="medalBoard")
     """Medal board."""
-
-    @pydantic.validator("assist_char_list", pre=True, each_item=True)  # pyright: ignore[reportUnknownMemberType]
-    def _fix_amiya(cls, v: typing.Any) -> typing.Any:
-        """Flatten amiya to only keep her guard form."""
-        if v and v.get("tmpl"):
-            current = v["tmpl"][v["currentTmpl"]]
-            v.update(current)
-
-        return v
 
 
 class Player(PartialPlayer):
@@ -193,7 +194,7 @@ class Player(PartialPlayer):
     team_v2: typing.Mapping[str, int] = pydantic.Field(alias="teamV2")
     """Amount of characters owned in each faction."""
     board: typing.Sequence[str]
-    """IDK. Factions with full trust. Shows up blue in-game."""
+    """Factions with full trust. Shows up blue in-game."""
     info_share: datetime.datetime = pydantic.Field(alias="infoShare")
     """IDK."""
     recent_visited: bool = pydantic.Field(alias="recentVisited")

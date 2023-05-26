@@ -35,7 +35,7 @@ async def main() -> None:
         print(f"Resume: {user.resume}")
         print(
             f"Current stage: {user.main_stage_progress} | Characters: {user.char_cnt} | Furniture: {user.furn_cnt} | "
-            f"Secretary: {client.gamedata.get_operator(user.secretary).name}",
+            f"Secretary: {client.gamedata.character_table[user.secretary].name}",
         )
         print(f"Playing since: {user.register_ts.isoformat()}")
         print(f"Last Online: {user.last_online_time.isoformat()}")

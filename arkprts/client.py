@@ -61,18 +61,24 @@ class Client:
 
     _seqnum: int
 
-    def __init__(self, *, pure: bool = False, **config: object) -> None:
+    def __init__(
+        self,
+        *,
+        config: Config | None = None,
+        gamedata: GameData | None = None,
+        pure: bool = False,
+    ) -> None:
         """Initialize the client.
 
         If `pure` is set to `True`, the client will not attempt to download game data.
         """
-        self.config = Config(**config)
+        self.config = config or Config()
+        self.gamedata = gamedata or GameData()
+        self.pure = pure
 
         self.uid = None
         self.secret = None
         self._seqnum = 1
-        self.pure = pure
-        self.gamedata = GameData()
 
     async def _request(
         self,
@@ -105,7 +111,7 @@ class Client:
         if self.uid is None or self.secret is None:
             raise errors.NotLoggedInError("Not logged in.")
 
-        logger.debug("Sending request #%d to %s.", self._seqnum, endpoint)
+        logger.debug("[%s] Sending request #%d to %s.", self.uid, self._seqnum, endpoint)
         headers = {
             "secret": self.secret,
             "seqnum": str(self._seqnum),

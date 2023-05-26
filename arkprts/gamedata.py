@@ -124,28 +124,40 @@ class GameData:
 
         logger.info("Downloaded game data")
 
-    def _get_data(self, name: str, *, server: str | None = None) -> models.DDict:
+    def _get_data(self, filename: str, *, server: str | None = None) -> models.DDict:
         """Get a file."""
         server = server or self.server
 
-        if self._cache.get(server, {}).get(name):
-            return models.DDict(self._cache[server][name])
+        if self._cache.get(server, {}).get(filename):
+            return models.DDict(self._cache[server][filename])
 
-        path = self.directory / server / "gamedata" / f"{name}.json"
+        path = self.directory / server / "gamedata" / filename
         if not path.exists():
             raise FileNotFoundError("Static gamedata has not been loaded.")
 
         with path.open(encoding="utf-8") as file:
             data = json.load(file)
 
-        self._cache.setdefault(server, {})[name] = data
+        self._cache.setdefault(server, {})[filename] = data
 
         return models.DDict(data)
 
     def get_excel(self, name: str, *, server: str | None = None) -> models.DDict:
         """Get an excel table file."""
-        return self._get_data(f"excel/{name}", server=server)
+        return self._get_data(f"excel/{name}.json", server=server)
 
+    def __getitem__(self, name: str) -> models.DDict:
+        """Get an excel table file."""
+        return self.get_excel(name)
+
+    def __getattr__(self, name: str) -> models.DDict:
+        """Get an excel table file."""
+        try:
+            return self[name]
+        except KeyError as e:
+            raise AttributeError(name) from e
+
+    # helper stuff
     def get_operator(self, id: str, *, server: str | None = None) -> models.DDict:
         """Get an operator."""
         data = self.get_excel("character_table", server=server)

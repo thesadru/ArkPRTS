@@ -8,5 +8,5 @@ async def test_download(client: arkprts.Client) -> None:
 
 
 def test_access(client: arkprts.Client) -> None:
-    operator = client.gamedata.get_operator("char_002_amiya")
+    operator = client.gamedata.character_table["char_002_amiya"]
     assert operator.name == "Amiya"

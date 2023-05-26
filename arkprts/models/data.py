@@ -44,18 +44,18 @@ class Status(base.BaseModel):
     """Amount of green commendation certificates.."""
     recruit_license: int = pydantic.Field(alias="recruitLicense")
     """Amount of recruitment permit."""
-    progress: int
+    progress: int = pydantic.Field(repr=False)
     """IDK."""
-    buy_ap_remain_times: int = pydantic.Field(alias="buyApRemainTimes")
-    """Remaining pulls until guaranteed 5 star operator."""
-    ap_limit_up_flag: bool = pydantic.Field(alias="apLimitUpFlag")
+    buy_ap_remain_times: int = pydantic.Field(alias="buyApRemainTimes", repr=False)
+    """IDK. Ap refers to sanity."""
+    ap_limit_up_flag: bool = pydantic.Field(alias="apLimitUpFlag", repr=False)
     """IDK. Ap refers to sanity."""
     uid: str
     """User ID."""
-    flags: typing.Mapping[str, bool]
+    flags: typing.Mapping[str, bool] = pydantic.Field(repr=False)
     """Completed stories."""
     ap: int
-    """Current sanity."""
+    """Current sanity. Actually not a true value."""
     max_ap: int = pydantic.Field(alias="maxAp")
     """Max sanity."""
     pay_diamond: int = pydantic.Field(alias="payDiamond")
@@ -72,13 +72,13 @@ class Status(base.BaseModel):
     """IDK. When sanity was last incremented."""
     last_ap_add_time: datetime.datetime = pydantic.Field(alias="lastApAddTime")
     """IDK."""
-    main_stage_progress: str = pydantic.Field(alias="mainStageProgress")
+    main_stage_progress: typing.Optional[str] = pydantic.Field(alias="mainStageProgress")
     """Current main story stage ID. None if completed."""
     register_ts: datetime.datetime = pydantic.Field(alias="registerTs")
     """Account creation time."""
     server_name: str = pydantic.Field(alias="serverName")
     """Server name. Should always be Terra."""
-    avatar_id: str = pydantic.Field(alias="avatarId")
+    avatar_id: str = pydantic.Field(alias="avatarId", repr=False)
     """IDK. Always 0."""
     resume: str
     """Player display bio."""
@@ -123,6 +123,15 @@ class SquadSlot(base.BaseModel):
     current_equip: typing.Optional[str] = None
     """Currently equipped module ID."""
 
+    @pydantic.root_validator(pre=True)  # pyright: ignore[reportUnknownMemberType]
+    def _fix_amiya(cls, values: typing.Any) -> typing.Any:
+        """Flatten Amiya to only keep her guard form."""
+        if values and values.get("tmpl"):
+            current = values["tmpl"][values["currentTmpl"]]
+            values.update(current)
+
+        return values
+
 
 class Squads(base.BaseModel):
     """Operator squad data."""
@@ -142,8 +151,8 @@ class Skill(base.BaseModel):
     """Skill ID."""
     unlock: bool
     """Whether the skill is unlocked."""
-    state: bool
-    """IDK."""
+    state: bool = pydantic.Field(repr=False)
+    """IDK. Always false."""
     specialize_level: int = pydantic.Field(alias="specializeLevel")
     """Skill mastery level."""
     complete_upgrade_time: typing.Optional[datetime.datetime] = pydantic.Field(alias="completeUpgradeTime")
@@ -159,7 +168,7 @@ class Skill(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this skill."""
-        return self.client.gamedata.get_skill(self.skill_id)
+        return self.client.gamedata.skill_table[self.skill_id]
 
 
 class Equip(base.BaseModel):
@@ -210,11 +219,21 @@ class Character(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this operator."""
-        return self.client.gamedata.get_operator(self.char_id)
+        return self.client.gamedata.character_table[self.char_id]
+
+    @pydantic.root_validator(pre=True)  # pyright: ignore[reportUnknownMemberType]
+    def _fix_amiya(cls, values: typing.Any) -> typing.Any:
+        """Flatten Amiya to only keep her guard form."""
+        if values and values.get("tmpl"):
+            current = values["tmpl"][values["currentTmpl"]]
+            values.update(current)
+            values["skin"] = current["skinId"]  # why even?
+
+        return values
 
 
 class CharGroup(base.BaseModel):
-    """Operator group data."""
+    """Additional operator data."""
 
     favor_point: int = pydantic.Field(alias="favorPoint")
     """Operator trust."""
@@ -233,20 +252,10 @@ class Troops(base.BaseModel):
     """Operator data."""
     char_group: typing.Mapping[str, CharGroup] = pydantic.Field(alias="charGroup")
     """Additional operator data."""
-    char_mission: typing.Mapping[str, typing.Mapping[str, bool]] = pydantic.Field(alias="charMission")
-    """Special operation missions."""
-    addon: base.DDict = pydantic.Field(default_factory=base.DDict)
+    char_mission: typing.Mapping[str, typing.Mapping[str, int]] = pydantic.Field(alias="charMission", repr=False)
+    """IDK. Special operation missions."""
+    addon: base.DDict = pydantic.Field(default_factory=base.DDict, repr=False)
     """IDK."""
-
-    @pydantic.validator("chars", pre=True)  # pyright: ignore[reportUnknownMemberType]
-    def _fix_amiya(cls, value: typing.Any) -> typing.Any:
-        """Flatten amiya to only keep her guard form."""
-        for v in value.values():
-            if v and v.get("tmpl"):
-                current = v["tmpl"][v["currentTmpl"]]
-                v.update(current)
-
-        return value
 
 
 class Skins(base.BaseModel):
@@ -276,7 +285,7 @@ class Social(base.BaseModel):
     """Support operators."""
     yesterday_reward: base.DDict = pydantic.Field(alias="yesterdayReward")
     """IDK. Clue exchange data."""
-    y_crisis_ss: typing.Union[str, typing.Any] = pydantic.Field(alias="yCrisisSs")
+    y_crisis_ss: typing.Union[str, typing.Any] = pydantic.Field(alias="yCrisisSs", repr=False)
     """IDK."""
     medal_board: base.DDict = pydantic.Field(default_factory=base.DDict, alias="medalBoard")
     """Medal board."""
