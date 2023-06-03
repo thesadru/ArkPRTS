@@ -52,7 +52,11 @@ class BaseModel(pydantic.BaseModel):
         """Arknights provides timestamps not with UTC but with the client's timezone."""
         for key, value in values.items():
             if isinstance(value, datetime.datetime):
-                values[key] = value.replace(tzinfo=None).astimezone()
+                ts = value.timestamp()
+                if ts in (0, -1):
+                    values[key] = None
+                else:
+                    values[key] = value.replace(tzinfo=None).astimezone()
 
         return values
 

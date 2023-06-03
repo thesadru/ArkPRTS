@@ -31,14 +31,7 @@ class Skill(base.BaseModel):
     specialize_level: int = pydantic.Field(alias="specializeLevel")
     """Skill mastery level."""
     complete_upgrade_time: typing.Optional[datetime.datetime] = pydantic.Field(alias="completeUpgradeTime")
-    """IDK. Time left until skill upgrade is complete. Is -1 if not upgrading."""
-
-    @pydantic.validator("complete_upgrade_time", pre=True)  # pyright: ignore[reportUnknownMemberType]
-    def _complete_upgrade_time(cls, v: int) -> typing.Optional[int]:
-        if v == -1:
-            return None
-
-        return v
+    """IDK. Time left until skill upgrade is complete. Is raw -1 if not upgrading."""
 
     @property
     def static(self) -> base.DDict:
@@ -73,7 +66,7 @@ class AssistChar(base.BaseModel):
     evolve_phase: int = pydantic.Field(alias="evolvePhase")
     """Elite phase."""
     favor_point: int = pydantic.Field(alias="favorPoint")
-    """Raw trust points (25570 is 200% Trust)"""
+    """Operator trust points."""
     potential_rank: int = pydantic.Field(alias="potentialRank")
     """Operator potential. Starts at 0."""
     level: int
@@ -89,6 +82,11 @@ class AssistChar(base.BaseModel):
     def static(self) -> base.DDict:
         """Static data for this operator."""
         return self.client.gamedata.character_table[self.char_id]
+
+    @property
+    def trust(self) -> int:
+        """Trust calculated from favor_point."""
+        return self.client.gamedata.calculate_trust_level(self.favor_point)
 
     @pydantic.root_validator(pre=True)  # pyright: ignore[reportUnknownMemberType]
     def _fix_amiya(cls, values: typing.Any) -> typing.Any:
@@ -195,7 +193,7 @@ class Player(PartialPlayer):
     """Amount of characters owned in each faction."""
     board: typing.Sequence[str]
     """Factions with full trust. Shows up blue in-game."""
-    info_share: datetime.datetime = pydantic.Field(alias="infoShare")
+    info_share: typing.Optional[datetime.datetime] = pydantic.Field(alias="infoShare")
     """IDK."""
     recent_visited: bool = pydantic.Field(alias="recentVisited")
     """IDK."""

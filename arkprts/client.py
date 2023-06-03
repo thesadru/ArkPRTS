@@ -163,8 +163,19 @@ class Client:
             "deviceId": self.config.device_id,
         }
         data = await self._request("POST", f"{PASSPORT_SERVER}/user/login", json=body)
-        # print(data["yostar_username"])
         return data["accessToken"]
+
+    async def _create_guest_account(self, device_id: str | None = None) -> tuple[str, str]:
+        """Create a new guest account."""
+        if device_id:
+            self.config.device_id = device_id
+
+        logger.debug("Creating guest account.")
+        body = {
+            "deviceId": self.config.device_id,
+        }
+        data = await self._request("POST", f"{PASSPORT_SERVER}/user/create", json=body)
+        return data["uid"], data["token"]
 
     async def _get_u8_token(self, channel_uid: str, access_token: str) -> str:
         """Get an arknights uid and u8 token from a channel uid and access token."""
@@ -261,6 +272,18 @@ class Client:
 
         print(f"Channel UID: {channel_uid} Token: {token}")  # noqa: T201
         print(f'Usage: client.login_with_token("{channel_uid}", "{token}")')  # noqa: T201
+
+    async def login_as_guest(
+        self,
+        nickname: str | None = None,
+        *,
+        device_id: str | None = None,
+    ) -> tuple[str, str]:
+        """Login as guest and return tokens."""
+        channel_uid, yostar_token = await self._create_guest_account(device_id)
+        await self.login_with_token(channel_uid, yostar_token)
+        await self._bind_nickname(nickname or "Doctor")
+        return channel_uid, yostar_token
 
     async def _bind_nickname(self, nickname: str) -> typing.Any:
         """Bind a nickname. Required for new accounts."""

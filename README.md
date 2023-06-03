@@ -41,6 +41,52 @@ print(f"Assist operator {operator.static.name} is level {operator.level}")
 
 To disable downloading static data use `arkprts.Client(pure=True)`. To choose the data download location set `client.gamedata = akprts.GameData("/path/to/data")`.
 
+If you do not trust logging in with your account but still wish to request public game data you may log in as a guest.
+Remember to save the generated credentials to not spam Arknights servers.
+
+```py
+client = arkprts.Client()
+uid, token = await client.login_as_guest()
+print(f"Please save uid {uid} and token {token}")
+
+users = await client.search_user("Doctor")
+
+# and later if you wish to use the same guest account again
+client = arkprts.Client()
+await client.login_with_token(uid, token)
+
+users = await client.search_user("Doctor")
+```
+
+### Frequent usage cases
+
+Get all of my operators.
+
+```py
+data = await client.get_data()
+for char in data.troop.chars.values():
+    print(char.char_id)
+```
+
+Get my inventory.
+
+```py
+data = await client.get_data()
+# normal inventory items
+for item_id, count in user.inventory.items():
+    if count > 0:
+        print(item_id, count)
+# basic items like originium or green certificates
+for item_id, count in user.status.basic_item_inventory.items():
+    if count > 0:
+        print(item_id, count)
+# consumable expirable items
+for item_id, subitems in user.consumable.items():
+    for item in subitems.values():
+        if count > 0:
+            print(item_id, item.ts, item.count)
+```
+
 ## Contributing
 
 Any kind of contribution is welcome.

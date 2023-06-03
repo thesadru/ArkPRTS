@@ -1,6 +1,7 @@
 """Gamedata client. Fetches from github and such."""
 from __future__ import annotations
 
+import bisect
 import json
 import logging
 import os
@@ -187,3 +188,8 @@ class GameData:
         """Get a module."""
         data = self.get_excel("uniequip_table", server=server)
         return data["equipDict"][id]
+
+    def calculate_trust_level(self, trust: int) -> int:
+        """Calculate trust level from trust points."""
+        frames = self.get_excel("favor_table")["favor_frames"]
+        return bisect.bisect_left(frames, trust, key=lambda x: x["data"]["favor_point"])

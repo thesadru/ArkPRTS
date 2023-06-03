@@ -156,14 +156,7 @@ class Skill(base.BaseModel):
     specialize_level: int = pydantic.Field(alias="specializeLevel")
     """Skill mastery level."""
     complete_upgrade_time: typing.Optional[datetime.datetime] = pydantic.Field(alias="completeUpgradeTime")
-    """IDK. Time left until skill upgrade is complete. Is -1 if not upgrading."""
-
-    @pydantic.validator("complete_upgrade_time", pre=True)  # pyright: ignore[reportUnknownMemberType]
-    def _complete_upgrade_time(cls, v: int) -> typing.Optional[int]:
-        if v == -1:
-            return None
-
-        return v
+    """IDK. Time left until skill upgrade is complete. Is raw -1 if not upgrading."""
 
     @property
     def static(self) -> base.DDict:
@@ -190,7 +183,7 @@ class Character(base.BaseModel):
     char_id: str = pydantic.Field(alias="charId")
     """Operator ID."""
     favor_point: int = pydantic.Field(alias="favorPoint")
-    """Operator trust."""
+    """Operator trust points."""
     potential_rank: int = pydantic.Field(alias="potentialRank")
     """Operator potential. Starts at 0."""
     main_skill_lvl: int = pydantic.Field(alias="mainSkillLvl")
@@ -221,6 +214,11 @@ class Character(base.BaseModel):
         """Static data for this operator."""
         return self.client.gamedata.character_table[self.char_id]
 
+    @property
+    def trust(self) -> int:
+        """Trust calculated from favor_point."""
+        return self.client.gamedata.calculate_trust_level(self.favor_point)
+
     @pydantic.root_validator(pre=True)  # pyright: ignore[reportUnknownMemberType]
     def _fix_amiya(cls, values: typing.Any) -> typing.Any:
         """Flatten Amiya to only keep her guard form."""
@@ -236,7 +234,12 @@ class CharGroup(base.BaseModel):
     """Additional operator data."""
 
     favor_point: int = pydantic.Field(alias="favorPoint")
-    """Operator trust."""
+    """Operator trust points."""
+
+    @property
+    def trust(self) -> int:
+        """Trust calculated from favor_point."""
+        return self.client.gamedata.calculate_trust_level(self.favor_point)
 
 
 class Troops(base.BaseModel):
@@ -294,7 +297,7 @@ class Social(base.BaseModel):
 class ConsumableExpire(base.BaseModel):
     """Consumable expiration data."""
 
-    ts: datetime.datetime
+    ts: typing.Optional[datetime.datetime]
     """When the consumable expires."""
     count: int
     """Amount of consumables."""
