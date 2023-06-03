@@ -1,5 +1,6 @@
 """Modified pydantic base model."""
 import collections
+import datetime
 import typing
 
 import pydantic
@@ -45,6 +46,15 @@ class BaseModel(pydantic.BaseModel):
         super().__init__(client=_fake_client, **kwargs)
         if client:
             _set_recursively(self, "client", client)
+
+    @pydantic.root_validator  # pyright: ignore[reportUnknownMemberType]
+    def _fix_timestamps(cls, values: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
+        """Arknights provides timestamps not with UTC but with the client's timezone."""
+        for key, value in values.items():
+            if isinstance(value, datetime.datetime):
+                values[key] = value.replace(tzinfo=None).astimezone()
+
+        return values
 
     class Config:
         """Config."""

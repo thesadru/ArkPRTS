@@ -60,6 +60,7 @@ class Client:
     secret: str | None
 
     _seqnum: int
+    _seqnum_lock: asyncio.Lock
 
     def __init__(
         self,
@@ -79,6 +80,7 @@ class Client:
         self.uid = None
         self.secret = None
         self._seqnum = 1
+        self._seqnum_lock = asyncio.Lock()
 
     async def _request(
         self,
@@ -111,15 +113,16 @@ class Client:
         if self.uid is None or self.secret is None:
             raise errors.NotLoggedInError("Not logged in.")
 
-        logger.debug("[%s] Sending request #%d to %s.", self.uid, self._seqnum, endpoint)
-        headers = {
-            "secret": self.secret,
-            "seqnum": str(self._seqnum),
-            "uid": self.uid,
-        }
-        self._seqnum += 1  # tfw no x++
+        async with self._seqnum_lock:
+            logger.debug("[%s] Sending request #%d to %s.", self.uid, self._seqnum, endpoint)
+            headers = {
+                "secret": self.secret,
+                "seqnum": str(self._seqnum),
+                "uid": self.uid,
+            }
+            self._seqnum += 1  # tfw no x++
 
-        return await self._request(method, f"{GAME_SERVER}/{endpoint}", headers=headers, **kwargs)
+            return await self._request(method, f"{GAME_SERVER}/{endpoint}", headers=headers, **kwargs)
 
     async def _load_network_config(self) -> None:
         """Get network config."""
@@ -274,10 +277,13 @@ class Client:
         param: typing.Mapping[str, str] = {},
     ) -> typing.Any:
         """Request sortedusers."""
-        return await self.request(
+        data = await self.request(
             "social/getSortListInfo",
             json={"type": type, "sortKeyList": sort_key, "param": param},
         )
+        data["result"].sort(key=lambda x: tuple(x[key] for key in sort_key), reverse=True)  # pyright: ignore
+
+        return data
 
     async def get_raw_friend_info(self, ids: typing.Sequence[str]) -> typing.Any:
         """Get detailed player info. You don't need to be friends actually."""
@@ -303,16 +309,22 @@ class Client:
         limit: int | None = None,
     ) -> typing.Sequence[models.Player]:
         """Search for a player and return a model."""
+        if "#" in nickname:
+            nickname, nicknumber = nickname.split("#", 1)
+
         uid_data = await self.get_raw_nicknamed(nickname, nicknumber)
-        uids = sorted(uid_data["result"], key=lambda x: x["level"], reverse=True)[:limit]
-        data = await self.get_raw_friend_info([uid["uid"] for uid in uids])
+        data = await self.get_raw_friend_info([uid["uid"] for uid in uid_data["result"][:limit]])
         return [models.Player(client=self, **i) for i in data["friends"]]
+
+    async def get_players(self, ids: typing.MutableSequence[str]) -> typing.Sequence[models.Player]:
+        """Get players and return a model."""
+        data = await self.get_raw_player_info(ids)
+        return [models.Player(client=self, **i) for i in data["result"]]
 
     async def get_friends(self, *, limit: int | None = None) -> typing.Sequence[models.Player]:
         """Get friends and return a model."""
         uid_data = await self.get_raw_friends()
-        uids = sorted(uid_data["result"], key=lambda x: x["level"], reverse=True)[:limit]
-        data = await self.get_raw_friend_info([uid["uid"] for uid in uids])
+        data = await self.get_raw_friend_info([uid["uid"] for uid in uid_data["result"][:limit]])
         return [models.Player(client=self, **i) for i in data["friends"]]
 
     async def get_data(self) -> models.User:

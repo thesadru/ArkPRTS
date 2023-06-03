@@ -83,7 +83,7 @@ class GameData:
 
             members: list[tarfile.TarInfo] = []
             for member in tar.getmembers():
-                if not re.search(allow, member.name):
+                if allow != "*" and not re.search(allow, member.name):
                     continue
 
                 member.name = member.name[len(top_directory + "/") :]
