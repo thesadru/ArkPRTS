@@ -17,19 +17,26 @@ import arkprts
 
 async def main() -> None:
     client = arkprts.Client()
-    await client.login_with_email("user@gmail.com")
-    # or client.login_with_token("123456", "abcdefg")
+
+    # search users by nickname
+    users = await client.search_player("Doctor", server="en")
+    print("User level: ", users[0].level)
+
+
+    # =======
+
+    # login with email or token
+    auth = arkprts.YostarAuth("en")
+    await auth.login_with_email_code("doctor@gmail.com")
+    # or auth.login_with_token("123456", "abcdefg")
+    client = arkprts.Client(auth=auth)
 
     # get logged-in user data
     data = await client.get_data()
     print("Level: ", data.status.level)
-
-    # get data of other users
-    users = await client.search_user("UserName")
-    print("Level: ", users[0].level)
 ```
 
-Returned data is in the form of pydantic models, however you can also request raw json with `client.get_raw_data()` to access even untyped data.
+Returned data is in the form of pydantic models, however you can also request raw json with `client.get_raw_player_info()`/`client.get_raw_data()`/... to access even untyped data.
 
 For convenience, static game data is automatically downloaded and updated on login. You can access the static data directly or through the models. This is useful for getting names and descriptions of objects.
 
@@ -39,24 +46,9 @@ operator = users[0].assist_char_list[0]  # type: arkprts.models.Character
 print(f"Assist operator {operator.static.name} is level {operator.level}")
 ```
 
-To disable downloading static data use `arkprts.Client(pure=True)`. To choose the data download location set `client.gamedata = akprts.GameData("/path/to/data")`.
+To disable downloading static data use `arkprts.Client(gamedata=False)`. To choose the data download location set `client.gamedata = akprts.GameData("/path/to/data")`.
 
-If you do not trust logging in with your account but still wish to request public game data you may log in as a guest.
-Remember to save the generated credentials to not spam Arknights servers.
-
-```py
-client = arkprts.Client()
-uid, token = await client.login_as_guest()
-print(f"Please save uid {uid} and token {token}")
-
-users = await client.search_user("Doctor")
-
-# and later if you wish to use the same guest account again
-client = arkprts.Client()
-await client.login_with_token(uid, token)
-
-users = await client.search_user("Doctor")
-```
+ArkPRTS supports en, jp, kr, cn and bili servers. However only global/yostar servers (en, jp and kr) can be used without logging in.
 
 ### Frequent usage cases
 
@@ -85,6 +77,44 @@ for item_id, subitems in user.consumable.items():
     for item in subitems.values():
         if count > 0:
             print(item_id, item.ts, item.count)
+```
+
+Logging in with email and password to the cn server.
+
+```py
+auth = arkprts.HypergryphAuth()
+await auth.login("doctor@qq.com", "wordpass12")
+client = arkprts.Client(auth=auth)
+
+await client.get_data()
+```
+
+Making a new client when a global guest client already exists; without excess overhead.
+
+```py
+public_client = arkprts.Client()
+
+# ----
+auth = arkprts.YostarAuth("en", network=public_client.network)
+await auth.login_with_token("123456", "abcdefg")
+private_client = arkprts.Client(auth=auth, gamedata=public_client.gamedata)
+```
+
+```py
+@route("/code")
+def code(request):
+    auth = arkprts.YostarAuth(request.query["server"], network=...)
+    await auth.get_token_from_email_code(request.query["email"])
+
+    return "Code sent!"
+
+
+@route("/login")
+def login(request):
+    auth = arkprts.YostarAuth(request.query["server"], network=...)
+    channel_uid, yostar_token = await auth.get_token_from_email_code(request.query["email"], request.query["code"])
+    
+    return {"channel_uid": channel_uid, "yostar_token": yostar_token}
 ```
 
 ## Contributing

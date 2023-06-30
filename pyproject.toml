@@ -1,5 +1,7 @@
 [project]
+name = "arkprts"
 requires-python = ">=3.9"
+version = "0.2.0"
 
 [build-system]
 requires = ["setuptools"]
@@ -46,6 +48,7 @@ line-length = 130
 # ANN401: Use of typing.Any (complicates)
 # B008: Do not perform function calls in argument defaults (pydantic)
 # B027: Empty method in ABC (optional rewrite)
+# B028: No stacklevel in warnings
 # B905: zip without strict= (ugly)
 # C408: Unnecessary dict call (ugly)
 # D105: Missing docstring in magic method (useless)
@@ -55,9 +58,11 @@ line-length = 130
 # PLR2004: constant value in comparison (asserts)
 # PLW2901: Redefining for-loop variable
 # RET504: Unnecessary variable before return (ugly)
-# TRY003: Long exception message
 # S101: Use of assert (type-checking)
 # S110: Try, Except, Pass (annoying)
+# S3xx: Use of random or md5
+# S607: Using git instead of an entire path
+# TRY003: Long exception message
 ignore = [
   "A",
   "ARG",
@@ -71,6 +76,7 @@ ignore = [
   "ANN401",
   "B008",
   "B027",
+  "B028",
   "B905",
   "C408",
   "D105",
@@ -81,8 +87,9 @@ ignore = [
   "PLW2901",
   "RET504",
   "S101",
+  "S3",
+  "S607",
   "TRY003",
-  "S110",
 ]
 # auto-fixing too intrusive
 # F401: Unused import

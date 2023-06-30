@@ -90,7 +90,7 @@ def test(session: nox.Session) -> None:
     args: typing.Sequence[str] = []
 
     if isverbose():
-        args += ["-vv", "--showlocals"]
+        args += ["-vv", "--showlocals", "-o", "log_cli=true", "-o", "log_cli_level=DEBUG"]
 
     if "--no-cov" in session.posargs:
         session.posargs.remove("--no-cov")

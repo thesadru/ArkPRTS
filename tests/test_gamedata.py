@@ -4,7 +4,7 @@ import arkprts
 
 async def test_download(client: arkprts.Client) -> None:
     # we could force, but that takes up a lot of time
-    await client.gamedata.download_gamedata()
+    await client.update_gamedata()
 
 
 def test_access(client: arkprts.Client) -> None:

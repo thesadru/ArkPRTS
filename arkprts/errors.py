@@ -24,7 +24,20 @@ class ArkPrtsError(BaseArkprtsError):
 
     def __init__(self, data: typing.Mapping[str, typing.Any]) -> None:
         self.data = data
-        super().__init__(f"[{data['result']}] {data}")
+        super().__init__(f"[{data['result']}] {self.message} {data}")
+
+
+class GeetestError(ArkPrtsError):
+    """Raised when login is flagged by geetest."""
+
+    message: str = "Geetest verification is required."
+    challenge: str
+    gt: str
+
+    def __init__(self, data: typing.Mapping[str, typing.Any]) -> None:
+        self.challenge = data["captcha"]["challenge"]
+        self.gt = data["captcha"]["gt"]
+        super().__init__(data)
 
 
 class InvalidStatusError(BaseArkprtsError):

@@ -5,13 +5,13 @@ import typing
 
 import pydantic
 
-from arkprts.client import Client
+from arkprts.client import CoreClient
 
 __all__ = ("BaseModel", "DDict")
 
 # pydantic hack
 _fake_client = type("", (object,), {})()
-_fake_client.__class__ = Client
+_fake_client.__class__ = CoreClient
 
 
 def _set_recursively(obj: typing.Any, name: str, value: typing.Any) -> None:
@@ -38,10 +38,10 @@ def _to_camel_case(string: str) -> str:
 class BaseModel(pydantic.BaseModel):
     """Client-aware pydantic base model."""
 
-    client: Client = pydantic.Field(repr=False)
+    client: CoreClient = pydantic.Field(repr=False)
     """Client instance."""
 
-    def __init__(self, client: typing.Optional[Client] = None, **kwargs: typing.Any) -> None:
+    def __init__(self, client: typing.Optional[CoreClient] = None, **kwargs: typing.Any) -> None:
         """Init."""
         super().__init__(client=_fake_client, **kwargs)
         if client:
