@@ -2,7 +2,6 @@
 
 Any field description prefixed with IDK means it's just a guess.
 """
-import datetime
 import typing
 
 import pydantic
@@ -30,7 +29,7 @@ class Skill(base.BaseModel):
     """IDK. Always false."""
     specialize_level: int = pydantic.Field(alias="specializeLevel")
     """Skill mastery level."""
-    complete_upgrade_time: typing.Optional[datetime.datetime] = pydantic.Field(alias="completeUpgradeTime")
+    complete_upgrade_time: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(alias="completeUpgradeTime")
     """IDK. Time left until skill upgrade is complete. Is raw -1 if not upgrading."""
 
     @property
@@ -71,12 +70,14 @@ class AssistChar(base.BaseModel):
     """Operator potential. Starts at 0."""
     level: int
     """Operator level."""
-    crisis_record: base.DDict = pydantic.Field(alias="crisisRecord", repr=False)
-    """IDK. selectedCrisis is used for contingency contracts elsewhere."""
+    crisis_record: typing.Mapping[str, int] = pydantic.Field(alias="crisisRecord")
+    """Maximum risk this operator was used as a support in. -1 if never used."""
     current_equip: typing.Optional[str] = pydantic.Field(alias="currentEquip")
     """ID of the currently equipped module."""
     equip: typing.Mapping[str, UniEquip]
     """Equipped modules. Module ID to module info."""
+    tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
+    """Alternative operator class data. Only for Amiya."""
 
     @property
     def static(self) -> base.DDict:
@@ -87,15 +88,6 @@ class AssistChar(base.BaseModel):
     def trust(self) -> int:
         """Trust calculated from favor_point."""
         return self.client.gamedata.calculate_trust_level(self.favor_point)
-
-    @pydantic.root_validator(pre=True)  # pyright: ignore[reportUnknownMemberType]
-    def _fix_amiya(cls, values: typing.Any) -> typing.Any:
-        """Flatten Amiya to only keep her guard form."""
-        if values and values.get("tmpl"):
-            current = values["tmpl"][values["currentTmpl"]]
-            values.update(current)
-
-        return values
 
 
 class PlacedMedal(base.BaseModel):
@@ -166,7 +158,7 @@ class PartialPlayer(base.BaseModel):
     """Selected avatar."""
     assist_char_list: typing.Sequence[typing.Optional[AssistChar]] = pydantic.Field(alias="assistCharList")
     """Assist operator list."""
-    last_online_time: datetime.datetime = pydantic.Field(alias="lastOnlineTime")
+    last_online_time: base.ArknightsTimestamp = pydantic.Field(alias="lastOnlineTime")
     """Last online time."""
     medal_board: MedalBoard = pydantic.Field(alias="medalBoard")
     """Medal board."""
@@ -175,7 +167,7 @@ class PartialPlayer(base.BaseModel):
 class Player(PartialPlayer):
     """Player info."""
 
-    register_ts: datetime.datetime = pydantic.Field(alias="registerTs")
+    register_ts: base.ArknightsTimestamp = pydantic.Field(alias="registerTs")
     """Account creation time."""
     main_stage_progress: typing.Optional[str] = pydantic.Field(alias="mainStageProgress")
     """Current main story stage ID. None if completed."""
@@ -193,7 +185,7 @@ class Player(PartialPlayer):
     """Amount of characters owned in each faction."""
     board: typing.Sequence[str]
     """Factions with full trust. Shows up blue in-game."""
-    info_share: typing.Optional[datetime.datetime] = pydantic.Field(alias="infoShare")
+    info_share: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(alias="infoShare")
     """IDK."""
     recent_visited: bool = pydantic.Field(alias="recentVisited")
     """IDK."""

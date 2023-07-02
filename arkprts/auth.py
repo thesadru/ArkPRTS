@@ -582,7 +582,7 @@ class YostarAuth(Auth):
         *,
         stdin: bool = False,
     ) -> tuple[str, str]:
-        """Get a token from a yostar account"""
+        """Get a token from a yostar account."""
         if not email:
             if not stdin:
                 raise TypeError("Email not provided but stdin is disabled.")
