@@ -10,6 +10,18 @@ Source Code: <https://github.com/thesadru/arkprts>
 
 ---
 
+## Installation
+
+```sh
+pip install -U arkprts
+```
+
+There may be some optional requirements, you can install them all with `all`.
+
+```sh
+pip install -U arkprts[all]
+```
+
 ## Usage
 
 ```py
@@ -19,7 +31,7 @@ async def main() -> None:
     client = arkprts.Client()
 
     # search users by nickname
-    users = await client.search_player("Doctor", server="en")
+    users = await client.search_players("Doctor", server="en")
     print("User level: ", users[0].level)
 
 
@@ -100,6 +112,8 @@ await auth.login_with_token("123456", "abcdefg")
 private_client = arkprts.Client(auth=auth, gamedata=public_client.gamedata)
 ```
 
+Programmatically getting auth tokens from a user on your website.
+
 ```py
 @route("/code")
 def code(request):
@@ -113,7 +127,7 @@ def code(request):
 def login(request):
     auth = arkprts.YostarAuth(request.query["server"], network=...)
     channel_uid, yostar_token = await auth.get_token_from_email_code(request.query["email"], request.query["code"])
-    
+
     return {"channel_uid": channel_uid, "yostar_token": yostar_token}
 ```
 

@@ -3,7 +3,7 @@
 ## Usage:
 >>> # Client for read-only public data
 >>> client = arkprts.Client()
->>> await client.search_player("...", limit=10)
+>>> await client.search_players("...", limit=10)
 [Player(...), ...]
 
 >>> # Client for read-only private data
@@ -172,7 +172,7 @@ class Client(CoreClient):
 
         return await self._get_social_sort_list(1, ["level", "infoShare"], {}, server=server)
 
-    async def get_raw_player_ids_by_nickname(
+    async def search_raw_player_ids(
         self,
         nickname: str,
         nicknumber: str = "",
@@ -187,7 +187,7 @@ class Client(CoreClient):
             server=server,
         )
 
-    async def search_player(
+    async def search_players(
         self,
         nickname: str,
         nicknumber: str = "",
@@ -199,8 +199,8 @@ class Client(CoreClient):
         if "#" in nickname:
             nickname, nicknumber = nickname.split("#", 1)
 
-        uid_data = await self.get_raw_player_ids_by_nickname(nickname, nicknumber, server=server)
-        data = await self.get_raw_friend_info([uid["uid"] for uid in uid_data["result"][:limit]])
+        uid_data = await self.search_raw_player_ids(nickname, nicknumber, server=server)
+        data = await self.get_raw_friend_info([uid["uid"] for uid in uid_data["result"][:limit]], server=server)
         return [models.Player(client=self, **i) for i in data["friends"]]
 
     async def get_players(

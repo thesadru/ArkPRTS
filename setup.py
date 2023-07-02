@@ -11,7 +11,7 @@ setup(
     packages=find_packages(exclude=["tests", "tests.*"]),
     include_package_data=True,
     package_data={"arkprts": ["py.typed"]},
-    install_requires=["aiohttp", "pydantic==1.*"],
+    install_requires=["aiohttp", "pydantic==2.*"],
     extras_require={"all": ["rsa"], "rsa": ["rsa"]},
     long_description=pathlib.Path("README.md").read_text(),
     long_description_content_type="text/markdown",

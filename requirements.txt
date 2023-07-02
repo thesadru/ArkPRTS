@@ -1,4 +1,4 @@
 aiohttp
-pydantic==1.*
+pydantic==2.*
 
 rsa

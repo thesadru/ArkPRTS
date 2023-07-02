@@ -4,6 +4,7 @@ import datetime
 import typing
 
 import pydantic
+import pydantic_core
 
 from arkprts.client import CoreClient
 
@@ -35,6 +36,17 @@ def _to_camel_case(string: str) -> str:
     return "".join(x.title() if i else x for i, x in enumerate(string.split("_")))
 
 
+def parse_timestamp(timestamp: int) -> datetime.datetime | None:
+    """Parse an arknights timestamp and use the local timezone.
+
+    Arknights provides timestamps not with UTC but with the client's timezone.
+    """
+    if timestamp in (0, -1):
+        return None
+
+    return datetime.datetime.fromtimestamp(timestamp).astimezone()  # noqa: DTZ006
+
+
 class BaseModel(pydantic.BaseModel):
     """Client-aware pydantic base model."""
 
@@ -47,18 +59,14 @@ class BaseModel(pydantic.BaseModel):
         if client:
             _set_recursively(self, "client", client)
 
-    @pydantic.root_validator  # pyright: ignore[reportUnknownMemberType]
-    def _fix_timestamps(cls, values: typing.Dict[str, typing.Any]) -> typing.Dict[str, typing.Any]:
-        """Arknights provides timestamps not with UTC but with the client's timezone."""
-        for key, value in values.items():
-            if isinstance(value, datetime.datetime):
-                ts = value.timestamp()
-                if ts in (0, -1):
-                    values[key] = None
-                else:
-                    values[key] = value.replace(tzinfo=None).astimezone()
+    @pydantic.model_validator(mode="before")
+    def _fix_amiya(cls, value: typing.Any, info: pydantic.ValidationInfo) -> typing.Any:
+        """Flatten Amiya to only keep her selected form if applicable."""
+        if value and value.get("tmpl"):
+            current = value["tmpl"][value["currentTmpl"]]
+            value.update(current)
 
-        return values
+        return value
 
     class Config:
         """Config."""
@@ -80,8 +88,13 @@ class DList(collections.UserList[typing.Any]):
         return item
 
     @classmethod
-    def __get_validators__(cls) -> typing.Iterator[typing.Callable[..., typing.Any]]:
-        yield lambda i: cls(i)
+    def __get_pydantic_core_schema__(
+        cls,
+        source: typing.Any,
+        handler: typing.Callable[[typing.Any], pydantic_core.CoreSchema],
+    ) -> pydantic_core.CoreSchema:
+        """Generate a pydantic core schema."""
+        return pydantic_core.core_schema.no_info_plain_validator_function(cls)
 
 
 class DDict(collections.UserDict[str, typing.Any]):
@@ -101,8 +114,19 @@ class DDict(collections.UserDict[str, typing.Any]):
         return item
 
     def __getattr__(self, key: str) -> typing.Any:
-        return self[key]
+        try:
+            return self[key]
+        except KeyError as e:
+            raise AttributeError(*e.args) from e
 
     @classmethod
-    def __get_validators__(cls) -> typing.Iterator[typing.Callable[..., typing.Any]]:
-        yield lambda i: cls(i)
+    def __get_pydantic_core_schema__(
+        cls,
+        source: typing.Any,
+        handler: typing.Callable[[typing.Any], pydantic_core.CoreSchema],
+    ) -> pydantic_core.CoreSchema:
+        """Generate a pydantic core schema."""
+        return pydantic_core.core_schema.no_info_plain_validator_function(cls)
+
+
+ArknightsTimestamp = typing.Annotated[datetime.datetime, pydantic.PlainValidator(parse_timestamp)]

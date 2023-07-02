@@ -2,7 +2,6 @@
 
 Any field description prefixed with IDK means it's just a guess.
 """
-import datetime
 import typing
 
 import pydantic
@@ -68,13 +67,13 @@ class Status(base.BaseModel):
     """Amount of LMD."""
     practice_ticket: int = pydantic.Field(alias="practiceTicket")
     """Amount of training permits."""
-    last_refresh_ts: datetime.datetime = pydantic.Field(alias="lastRefreshTs")
+    last_refresh_ts: base.ArknightsTimestamp = pydantic.Field(alias="lastRefreshTs")
     """IDK. When sanity was last incremented."""
-    last_ap_add_time: datetime.datetime = pydantic.Field(alias="lastApAddTime")
+    last_ap_add_time: base.ArknightsTimestamp = pydantic.Field(alias="lastApAddTime")
     """IDK."""
     main_stage_progress: typing.Optional[str] = pydantic.Field(alias="mainStageProgress")
     """Current main story stage ID. None if completed."""
-    register_ts: datetime.datetime = pydantic.Field(alias="registerTs")
+    register_ts: base.ArknightsTimestamp = pydantic.Field(alias="registerTs")
     """Account creation time."""
     server_name: str = pydantic.Field(alias="serverName")
     """Server name. Should always be Terra."""
@@ -122,15 +121,8 @@ class SquadSlot(base.BaseModel):
     """Index of chosen skill."""
     current_equip: typing.Optional[str] = None
     """Currently equipped module ID."""
-
-    @pydantic.root_validator(pre=True)  # pyright: ignore[reportUnknownMemberType]
-    def _fix_amiya(cls, values: typing.Any) -> typing.Any:
-        """Flatten Amiya to only keep her guard form."""
-        if values and values.get("tmpl"):
-            current = values["tmpl"][values["currentTmpl"]]
-            values.update(current)
-
-        return values
+    tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
+    """Alternative operator class data. Only for Amiya."""
 
 
 class Squads(base.BaseModel):
@@ -155,7 +147,7 @@ class Skill(base.BaseModel):
     """IDK. Always false."""
     specialize_level: int = pydantic.Field(alias="specializeLevel")
     """Skill mastery level."""
-    complete_upgrade_time: typing.Optional[datetime.datetime] = pydantic.Field(alias="completeUpgradeTime")
+    complete_upgrade_time: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(alias="completeUpgradeTime")
     """IDK. Time left until skill upgrade is complete. Is raw -1 if not upgrading."""
 
     @property
@@ -208,6 +200,8 @@ class Character(base.BaseModel):
     """Operator modules."""
     star_mark: bool = pydantic.Field(False, alias="starMark")
     """Whether the operator is marked as favorite."""
+    tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
+    """Alternative operator class data. Only for Amiya."""
 
     @property
     def static(self) -> base.DDict:
@@ -218,16 +212,6 @@ class Character(base.BaseModel):
     def trust(self) -> int:
         """Trust calculated from favor_point."""
         return self.client.gamedata.calculate_trust_level(self.favor_point)
-
-    @pydantic.root_validator(pre=True)  # pyright: ignore[reportUnknownMemberType]
-    def _fix_amiya(cls, values: typing.Any) -> typing.Any:
-        """Flatten Amiya to only keep her guard form."""
-        if values and values.get("tmpl"):
-            current = values["tmpl"][values["currentTmpl"]]
-            values.update(current)
-            values["skin"] = current["skinId"]  # why even?
-
-        return values
 
 
 class CharGroup(base.BaseModel):
@@ -266,7 +250,7 @@ class Skins(base.BaseModel):
 
     character_skins: typing.Mapping[str, bool] = pydantic.Field(alias="characterSkins")
     """Owned skins."""
-    skin_ts: typing.Mapping[str, datetime.datetime] = pydantic.Field(alias="skinTs")
+    skin_ts: typing.Mapping[str, base.ArknightsTimestamp] = pydantic.Field(alias="skinTs")
     """When the skins were obtained."""
 
 
@@ -279,6 +263,8 @@ class AssistChar(base.BaseModel):
     """Index of the selected skill."""
     current_equip: typing.Optional[str] = pydantic.Field(alias="currentEquip")
     """Currently equipped module."""
+    tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
+    """Alternative operator class data. Only for Amiya."""
 
 
 class Social(base.BaseModel):
@@ -297,7 +283,7 @@ class Social(base.BaseModel):
 class ConsumableExpire(base.BaseModel):
     """Consumable expiration data."""
 
-    ts: typing.Optional[datetime.datetime]
+    ts: typing.Optional[base.ArknightsTimestamp]
     """When the consumable expires."""
     count: int
     """Amount of consumables."""

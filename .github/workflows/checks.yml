@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 jobs:
   lint:
+    name: Lint
     runs-on: ubuntu-latest
 
     steps:
@@ -20,35 +21,25 @@ jobs:
         run: python -m nox -s lint
 
   test:
+    name: Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11"]
-      fail-fast: false
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Python ${{ matrix.python-version }}
+      - name: Setup Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
 
       - name: install nox
         run: python -m pip install nox
       - name: Run tests
         run: |
-          python -m nox -s test --python ${{ matrix.python-version }} --verbose -- --cov-append
-          mv .coverage .coverage.${{ matrix.python-version }}
-      - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: coverage
-          path: .coverage.${{ matrix.python-version }}
-          retention-days: 1
-          if-no-files-found: error
+          python -m nox -s test --verbose
 
   type-check:
+    name: Type check
     runs-on: ubuntu-latest
 
     steps:
@@ -65,6 +56,7 @@ jobs:
         run: python -m nox -s type-check
 
   verify-types:
+    name: Verify types
     runs-on: ubuntu-latest
 
     steps:
@@ -81,6 +73,7 @@ jobs:
         run: python -m nox -s verify-types
 
   prettier:
+    name: Prettier
     runs-on: ubuntu-latest
 
     steps:

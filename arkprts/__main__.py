@@ -33,26 +33,26 @@ async def main() -> None:
     client = arkprts.Client(auth)
 
     if args.nickname:
-        users = await client.search_player(args.nickname, limit=10)
+        players = await client.search_players(args.nickname, limit=10)
     else:
-        users = await client.get_friends()
+        players = await client.get_friends()
         print("Friends:", end="\n\n")
 
-    for user in users:
-        if user.level < 5:
+    for player in players:
+        if player.level < 5:
             continue
 
-        print(f"{user.nickname}#{user.nick_number} ({user.uid}) Lvl {user.level}")
-        print(f"Resume: {user.resume}")
+        print(f"{player.nickname}#{player.nick_number} ({player.uid}) Lvl {player.level}")
+        print(f"Resume: {player.resume}")
         print(
-            f"Current stage: {user.main_stage_progress} | Characters: {user.char_cnt} | Furniture: {user.furn_cnt} | "
-            f"Secretary: {client.gamedata.character_table[user.secretary].name}",
+            f"Current stage: {player.main_stage_progress} | Characters: {player.char_cnt} | Furniture: {player.furn_cnt} | "
+            f"Secretary: {client.gamedata.character_table[player.secretary].name}",
         )
-        print(f"Playing since: {user.register_ts.isoformat()}")
-        print(f"Last Online: {user.last_online_time.isoformat()}")
+        print(f"Playing since: {player.register_ts.isoformat()}")
+        print(f"Last Online: {player.last_online_time.isoformat()}")
 
         print("Support Operators: ", end="")
-        for char in user.assist_char_list:
+        for char in player.assist_char_list:
             if not char:
                 continue
             print(f"{char.static.name} E{char.evolve_phase}L{char.level}", end="")
