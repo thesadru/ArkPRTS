@@ -6,6 +6,23 @@ As you likely know from the game itself, you need to get through two screens bef
 The first checks the game version and network configuration.
 The client and asset version must be sent along with a channel uid and access token to the game server.
 
+| slug   | Example (en)                                                                    | Meaning                             |
+| ------ | ------------------------------------------------------------------------------- | ----------------------------------- |
+| gs     | https://gs.arknights.global:8443                                                | Game server                         |
+| as     | https://as.arknights.global                                                     | Authentication server               |
+| u8     | https://as.arknights.global/u8                                                  | u8* token authentication server     |
+| hu     | https://ark-us-static-online.yo-star.com/assetbundle/official                   | Game assets                         |
+| hv     | https://ark-us-static-online.yo-star.com/assetbundle/official/{0}/version       | Game assets & app versions          |
+| rc     | https://ak-conf.arknights.global/config/prod/official/remote_config             | Unique server config                |
+| an     | https://ark-us-static-online.yo-star.com/announce/{0}/announcement.meta.json    | Announcements                       |
+| prean  | https://ark-us-static-online.yo-star.com/announce/{0}/preannouncement.meta.json | Pre-announcements on the login page |
+| sl     | https://www.arknights.global/terms_of_service                                   | Terms of service                    |
+| of     | https://www.arknights.global                                                    | Official webpage                    |
+| pkgAd  | https://play.google.com/store/apps/details?id=com.YoStarEN.Arknights            | Google play store apk               |
+| pkgIOS | https://apps.apple.com/us/app/id1464872022?mt=8                                 | IOS store apk                       |
+
+*anyone know what u8 means?
+
 
 # Authentication
 
@@ -45,8 +62,20 @@ The account however needs to bind a nickname before making any requests (after a
 - Send a hashed password to receive a channel uid and access key.
 
 ### Authenticate
-- Use the access key to get a bilibili uid.and channel uid to get an arknights player uid and u8 token.
+- Use the access key and channel uid to get an arknights player uid and u8 token.
 - Use the arknights player uid and u8 token to get a session secret.
+
+
+## Taiwan (Longcheng)
+
+### Get a permanent token
+Taiwan clearly has guest login and facebook / google play.
+Unfortunately I have not been able to figure out how it works.
+
+### Authenticate
+- Use the channel uid and access token to get an arknights player uid and u8 token.
+- Use the arknights player uid and u8 token to get a session secret.
+
 
 # Making requests
 
@@ -102,25 +131,22 @@ __all__ = [
 
 logger: logging.Logger = logging.getLogger("arkprts.auth")
 
-# auth methods; these are in no way official slugs, just my own naming
-ArknightsDistributor = typing.Literal["yostar", "hypergryph", "bilibili", "longcheng"]
-# individual servers; actually only en, cn and bili are supported :(
-ArknightsServer = typing.Literal["en", "jp", "kr", "cn", "bili", "tw"]
-# gamedata language; based on the client dump fork
-ArknightsLanguage = typing.Literal["en_US", "ja_JP", "ko_KR", "zh_CN", "zh_TW"]
+# these are in no way official slugs, just my own naming
 
+ArknightsDistributor = typing.Literal["yostar", "hypergryph", "bilibili", "longcheng"]
+ArknightsServer = typing.Literal["en", "jp", "kr", "cn", "bili", "tw"]
+ArknightsLanguage = typing.Literal["en_US", "ja_JP", "ko_KR", "zh_CN", "zh_TW"]
 ArknightsIdentifier = typing.Union[ArknightsDistributor, ArknightsServer, ArknightsLanguage]
 
 ArknightsDomain = typing.Literal["gs", "as", "u8", "hu", "hv", "rc", "an", "prean", "sl", "of", "pkgAd", "pkgIOS"]
-
 NETWORK_ROUTES: dict[ArknightsServer, str] = {
     "en": "https://ak-conf.arknights.global/config/prod/official/network_config",
     "jp": "https://ak-conf.arknights.jp/config/prod/official/network_config",
     "kr": "https://ak-conf.arknights.kr/config/prod/official/network_config",
     "cn": "https://ak-conf.hypergryph.com/config/prod/official/network_config",
     "bili": "https://ak-conf.hypergryph.com/config/prod/b/network_config",
+    "tw": "https://ak-conf.txwy.tw/config/prod/official/network_config",
 }
-
 YOSTAR_PASSPORT_DOMAINS: dict[typing.Literal["en", "jp", "kr"], str] = {
     "en": "https://passport.arknights.global",
     "jp": "https://passport.arknights.jp",
@@ -144,20 +170,20 @@ REGION_IDENTIFIER_MAPPING: dict[
     "yostar": ("yostar", "en", "en_US"),
     "hypergryph": ("hypergryph", "cn", "zh_CN"),
     "bilibili": ("bilibili", "bili", "zh_CN"),
-    "longcheng": None,
+    "longcheng": ("longcheng", "cn", "zh_TW"),
     # Server
     "en": ("yostar", "en", "en_US"),
     "jp": ("yostar", "jp", "ja_JP"),
     "kr": ("yostar", "kr", "ko_KR"),
     "cn": ("hypergryph", "cn", "zh_CN"),
     "bili": ("bilibili", "bili", "zh_CN"),
-    "tw": None,
+    "tw": ("longcheng", "cn", "zh_TW"),
     # Language
     "en_US": ("yostar", "en", "en_US"),
     "ja_JP": ("yostar", "jp", "ja_JP"),
     "ko_KR": ("yostar", "kr", "ko_KR"),
     "zh_CN": ("hypergryph", "cn", "zh_CN"),
-    "zh_TW": None,
+    "zh_TW": ("longcheng", "cn", "zh_TW"),
 }
 
 RawAuthMapping = typing.TypedDict("RawAuthMapping", {"server": ArknightsServer, "channel_uid": str, "token": str})
@@ -508,6 +534,9 @@ class Auth(abc.ABC, CoreAuth):
         elif region == "bili":
             auth = BilibiliAuth(region, network=network)
             await auth.login_with_token(channel_uid, token)
+        elif region == "tw":
+            auth = LongchengAuth(region, network=network)
+            await auth.login_with_token(channel_uid, token)
         else:
             raise ValueError(f"Cannot create a generic auth client for region {region!r}")
 
@@ -833,16 +862,46 @@ class BilibiliAuth(Auth):
         return channel_uid, access_token
 
 
+class LongchengAuth(Auth):
+    """Authentication client for taiwan accounts."""
+
+    distributor: typing.Literal["longcheng"]
+    server: typing.Literal["tw"]
+
+    def __init__(
+        self,
+        server: typing.Literal["tw"] = "tw",
+        *,
+        network: NetworkSession | None = None,
+    ) -> None:
+        super().__init__(server, network=network)
+
+    async def login_with_token(self, channel_uid: str, access_token: str) -> None:
+        """Login with an access token."""
+        self.session.uid, u8_token = await self._get_u8_token(channel_uid, access_token)
+        await self._get_secret(self.session.uid, u8_token)
+
+
 class MultiAuth(CoreAuth):
     """Authentication client for multiple sessions."""
 
     network: NetworkSession
     """Network session."""
+
+    # may be exceeded if multiple sessions are created at once
+    max_sessions: int
+    """Maximum number of concurrent sessions per region."""
     sessions: list[AuthSession]
     """Authentication sessions."""
 
-    def __init__(self, network: NetworkSession | None = None) -> None:
+    def __init__(
+        self,
+        max_sessions: int = 6,
+        *,
+        network: NetworkSession | None = None,
+    ) -> None:
         self.network = network or NetworkSession()
+        self.max_sessions = max_sessions
         self.sessions = []
 
     def _get_free_session(self, server: ArknightsServer) -> AuthSession | None:
@@ -852,6 +911,13 @@ class MultiAuth(CoreAuth):
                 return session
 
         return None
+
+    async def _wait_for_free_session(self, server: ArknightsServer) -> AuthSession:
+        """Wait a session to be freed."""
+        while True:
+            await asyncio.sleep(0.1)
+            if session := self._get_free_session(server):
+                return session
 
     async def _create_new_session(self, server: ArknightsServer) -> AuthSession:
         """Create a new session for a selected server."""
@@ -881,6 +947,8 @@ class MultiAuth(CoreAuth):
             raise ValueError("No default server set.")
 
         session = self._get_free_session(server)
+        if session is None and sum(session.server == server for session in self.sessions) >= self.max_sessions:
+            session = await self._wait_for_free_session(server)
         if session is None:
             session = await self._create_new_session(server)
             self.sessions.append(session)
@@ -911,10 +979,6 @@ class MultiAuth(CoreAuth):
 class GuestAuth(MultiAuth):
     """Authentication client for dynamically generating guest accounts."""
 
-    # may be exceeded if multiple sessions are created at once
-    # that will however rarely happen
-    max_sessions: int
-    """Maximum number of concurrent sessions per region."""
     cache_path: pathlib.Path | None
     """Location of stored guest authentication."""
     upcoming_auth: list[RawAuthMapping]
@@ -927,8 +991,7 @@ class GuestAuth(MultiAuth):
         *,
         network: NetworkSession | None = None,
     ) -> None:
-        super().__init__(network=network)
-        self.max_sessions = max_sessions
+        super().__init__(max_sessions=max_sessions, network=network)
 
         # load cache file or use provided auth
         self.upcoming_auth = []
@@ -1001,14 +1064,7 @@ class GuestAuth(MultiAuth):
     async def _create_new_session(self, server: ArknightsServer) -> AuthSession:
         """Create a new guest account."""
         if server not in ("en", "jp", "kr"):
-            raise ValueError("Guest accounts are only supported in the global server.")
-
-        if sum(session.server == server for session in self.sessions) >= self.max_sessions:
-            # max number of sessions reached, wait for one to be freed
-            while True:
-                await asyncio.sleep(0.1)
-                if session := self._get_free_session(server):
-                    return session
+            raise ValueError("Guest accounts are only supported on the global server.")
 
         session = await self._load_upcoming_session(server)
         if session is not None:

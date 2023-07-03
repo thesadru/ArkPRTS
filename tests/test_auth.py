@@ -159,7 +159,7 @@ def test_bili_client(bili_client: arkprts.Client) -> None:
 def test_tw_client(tw_client: arkprts.Client) -> None:
     assert isinstance(tw_client.auth, arkprts.Auth)
     assert tw_client.auth.server == "tw"
-    assert tw_client.auth.distributor == "taiwan"
+    assert tw_client.auth.distributor == "longcheng"
     assert tw_client.auth.session.uid
 
 
