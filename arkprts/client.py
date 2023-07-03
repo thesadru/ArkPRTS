@@ -23,6 +23,7 @@ User(...)
 from __future__ import annotations
 
 import typing
+import warnings
 
 from . import auth as authn
 from . import gamedata as gd
@@ -80,6 +81,11 @@ class CoreClient:
         """Return the network of the client."""
         return self.auth.network
 
+    @property
+    def server(self) -> authn.ArknightsServer | None:
+        """Return the default server of the client."""
+        return self.network.default_server
+
     async def request(self, endpoint: str, **kwargs: typing.Any) -> typing.Any:
         """Authenticate a request."""
         if self.gamedata and not self.gamedata.loaded:
@@ -108,6 +114,14 @@ class CoreClient:
         """Create a client from a token."""
         auth = await authn.Auth.from_token(server, channel_uid, token, network=network)
         return cls(auth, gamedata=gamedata)
+
+    async def login_with_token(self, channel_uid: str, token: str) -> None:
+        """Login with username and password."""
+        warnings.warn(
+            "client.login_with_token is deprecated, please use Client.from_token(...) or Client(auth=...)",
+            category=DeprecationWarning,
+        )
+        self.auth = await authn.Auth.from_token(self.server or "en", channel_uid, token, network=self.network)
 
 
 class Client(CoreClient):
