@@ -13,7 +13,7 @@ setup(
     package_data={"arkprts": ["py.typed"]},
     install_requires=["aiohttp", "pydantic==2.*"],
     extras_require={"all": ["rsa"], "rsa": ["rsa"]},
-    long_description=pathlib.Path("README.md").read_text(),
+    long_description=pathlib.Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
     license="MIT",
 )
