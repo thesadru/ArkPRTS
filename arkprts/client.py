@@ -45,6 +45,7 @@ class CoreClient:
     def __init__(
         self,
         auth: authn.CoreAuth | None = None,
+        *,
         gamedata: gd.GameData | typing.Literal[False] | None = None,
         network: authn.NetworkSession | None = None,
         server: authn.ArknightsServer | None = None,

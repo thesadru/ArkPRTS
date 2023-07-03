@@ -52,6 +52,7 @@ line-length = 130
 # B905: zip without strict= (ugly)
 # C408: Unnecessary dict call (ugly)
 # D105: Missing docstring in magic method (useless)
+# E501: Line too long (black already manages this)
 # N805: First argument is not self (pydantic)
 # PGH003: Specific rules when ignoring type issues
 # PLR0913: Too many arguments
@@ -63,6 +64,7 @@ line-length = 130
 # S3xx: Use of random or md5
 # S607: Using git instead of an entire path
 # TRY003: Long exception message
+# UP013: Functional TypedDict
 ignore = [
   "A",
   "ARG",
@@ -80,6 +82,7 @@ ignore = [
   "B905",
   "C408",
   "D105",
+  "E501",
   "N805",
   "PGH003",
   "PLR0913",
@@ -90,6 +93,7 @@ ignore = [
   "S3",
   "S607",
   "TRY003",
+  "UP013",
 ]
 # auto-fixing too intrusive
 # F401: Unused import

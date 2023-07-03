@@ -17,7 +17,7 @@ Install the following extensions:
 
 - [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 - [Pylance](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-pylance)
-- [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
+- [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) (optional)
 
 `.vscode/settings.json`
 

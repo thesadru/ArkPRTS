@@ -71,12 +71,15 @@ import hashlib
 import hmac
 import json
 import logging
+import pathlib
 import random
 import string
+import tempfile
 import time
 import typing
 import urllib.parse
 import uuid
+import warnings
 
 import aiohttp
 
@@ -157,6 +160,8 @@ REGION_IDENTIFIER_MAPPING: dict[
     "zh_TW": None,
 }
 
+RawAuthMapping = typing.TypedDict("RawAuthMapping", {"server": ArknightsServer, "channel_uid": str, "token": str})
+
 
 def parse_server(identifier: ArknightsIdentifier) -> tuple[ArknightsDistributor, ArknightsServer, ArknightsLanguage]:
     """Parse a server, distributor, or language into a distributor, server, and language."""
@@ -182,6 +187,11 @@ def generate_u8_sign(data: typing.Mapping[str, object]) -> str:
 
     hama_code = hmac.new(b"91240f70c09a08a6bc72af1a5c8d4670", query.encode(), "sha1")
     return hama_code.hexdigest().lower()
+
+
+# aiohttp uses a very noisy library
+_charset_normalizer_logger = logging.getLogger("charset_normalizer")
+_charset_normalizer_logger.setLevel(logging.INFO)
 
 
 class NetworkSession:
@@ -336,7 +346,7 @@ class CoreAuth(typing.Protocol):
         self,
         endpoint: str,
         *,
-        region: ArknightsServer = ...,
+        region: ArknightsServer | None = None,
         **kwargs: typing.Any,
     ) -> typing.Any:
         """Send an authenticated request to the arkights game server."""
@@ -359,6 +369,7 @@ class Auth(abc.ABC, CoreAuth):
     def __init__(
         self,
         server: ArknightsServer | None = None,
+        *,
         network: NetworkSession | None = None,
     ) -> None:
         if server is None and network is not None:
@@ -452,7 +463,7 @@ class Auth(abc.ABC, CoreAuth):
         """Get a secret from an arknights uid and a u8 token."""
         logger.debug("Getting session secret for %s.", uid)
         if not self.network.versions.get(self.server):
-            await self.network.load_version_config()
+            await self.network.load_version_config(self.server)
 
         network_version = {"hypergryph": "5", "bilibili": "5", "yostar": "1"}[self.distributor]
 
@@ -512,9 +523,10 @@ class YostarAuth(Auth):
     def __init__(
         self,
         server: typing.Literal["en", "jp", "kr"] = "en",
+        *,
         network: NetworkSession | None = None,
     ) -> None:
-        super().__init__(server, network)
+        super().__init__(server, network=network)
 
     async def request_passport(self, endpoint: str, **kwargs: typing.Any) -> typing.Any:
         """Send a request to a yostar passport endpoint."""
@@ -634,9 +646,10 @@ class HypergryphAuth(Auth):
     def __init__(
         self,
         server: typing.Literal["cn"] = "cn",
+        *,
         network: NetworkSession | None = None,
     ) -> None:
-        super().__init__(server, network)
+        super().__init__(server, network=network)
 
     async def _get_hypergryph_access_token(self, username: str, password: str) -> str:
         """Get an access token from a username and password."""
@@ -713,9 +726,10 @@ class BilibiliAuth(Auth):
     def __init__(
         self,
         server: typing.Literal["bili"] = "bili",
+        *,
         network: NetworkSession | None = None,
     ) -> None:
-        super().__init__(server, network)
+        super().__init__(server, network=network)
 
     @staticmethod
     def _sign_body(body: typing.Mapping[str, str]) -> str:
@@ -840,7 +854,7 @@ class MultiAuth(CoreAuth):
         return None
 
     async def _create_new_session(self, server: ArknightsServer) -> AuthSession:
-        """Create a new session for a selected server and add it to the list of sessions."""
+        """Create a new session for a selected server."""
         raise RuntimeError("No method for creating new sessions specified.")
 
     async def request(
@@ -869,6 +883,7 @@ class MultiAuth(CoreAuth):
         session = self._get_free_session(server)
         if session is None:
             session = await self._create_new_session(server)
+            self.sessions.append(session)
             logger.debug("Created new session %s for server %s.", session.uid, server)
 
         async with session as headers:
@@ -896,16 +911,92 @@ class MultiAuth(CoreAuth):
 class GuestAuth(MultiAuth):
     """Authentication client for dynamically generating guest accounts."""
 
+    # may be exceeded if multiple sessions are created at once
+    # that will however rarely happen
     max_sessions: int
     """Maximum number of concurrent sessions per region."""
+    cache_path: pathlib.Path | None
+    """Location of stored guest authentication."""
+    upcoming_auth: list[RawAuthMapping]
+    """Upcoming accounts that are yet to be loaded."""
 
     def __init__(
         self,
         max_sessions: int = 6,
+        cache: pathlib.Path | str | typing.Sequence[RawAuthMapping] | typing.Literal[False] | None = None,
+        *,
         network: NetworkSession | None = None,
     ) -> None:
-        super().__init__(network)
+        super().__init__(network=network)
         self.max_sessions = max_sessions
+
+        # load cache file or use provided auth
+        self.upcoming_auth = []
+        if cache is False:
+            self.cache_path = None
+        elif isinstance(cache, (pathlib.Path, str)):
+            self.cache_path = pathlib.Path(cache)
+        elif cache is None:
+            self.cache_path = pathlib.Path(tempfile.gettempdir()) / "arkprts_auth_cache.json"
+        else:
+            self.cache_path = None
+            self.upcoming_auth = list(cache)
+
+        if self.cache_path:
+            self.upcoming_auth.extend(self._load_cache())
+
+    def _load_cache(self) -> typing.Sequence[RawAuthMapping]:
+        """Load cached guest accounts."""
+        if not self.cache_path:
+            return []
+
+        if not self.cache_path.exists():
+            return []
+
+        with self.cache_path.open() as f:
+            data = json.load(f)
+
+        return data
+
+    def _save_cache(self, data: typing.Sequence[RawAuthMapping]) -> None:
+        """Save cached guest accounts."""
+        if not self.cache_path:
+            return
+
+        with self.cache_path.open("w") as f:
+            json.dump(data, f)
+
+    def _append_to_cache(self, server: ArknightsServer, channel_uid: str, token: str) -> None:
+        """Append a guest account to the cache."""
+        if not self.cache_path:
+            return
+
+        data = list(self._load_cache())
+        data.append({"server": server, "channel_uid": channel_uid, "token": token})
+        self._save_cache(data)
+
+    async def _load_upcoming_session(self, server: ArknightsServer) -> AuthSession | None:
+        """Take one upcoming auth and create a session from it."""
+        for i, auth in enumerate(self.upcoming_auth):
+            if auth["server"] == server:
+                self.upcoming_auth.pop(i)
+                break
+        else:
+            return None
+
+        logging.debug("Loading cached auth %s for %s.", auth["channel_uid"], auth["server"])
+        try:
+            auth = await Auth.from_token(server, auth["channel_uid"], auth["token"], network=self.network)
+        except errors.ArkPrtsError as e:
+            warnings.warn(f"Failed to load cached auth: {e}")
+            # remove faulty auth from cache file
+            data = list(self._load_cache())
+            data.remove(auth)
+            self._save_cache(data)
+
+            return None
+
+        return auth.session
 
     async def _create_new_session(self, server: ArknightsServer) -> AuthSession:
         """Create a new guest account."""
@@ -919,7 +1010,11 @@ class GuestAuth(MultiAuth):
                 if session := self._get_free_session(server):
                     return session
 
-        auth = YostarAuth(server, self.network)
-        await auth.login_as_guest()
-        self.add_session(auth.session)
+        session = await self._load_upcoming_session(server)
+        if session is not None:
+            return session
+
+        auth = YostarAuth(server, network=self.network)
+        channel_uid, token = await auth.login_as_guest()
+        self._append_to_cache(server=server, channel_uid=channel_uid, token=token)
         return auth.session

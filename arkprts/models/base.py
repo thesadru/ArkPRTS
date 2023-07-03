@@ -19,7 +19,7 @@ def _set_recursively(obj: typing.Any, name: str, value: typing.Any) -> None:
     """Set an attribute recursively."""
     if isinstance(obj, BaseModel):
         object.__setattr__(obj, name, value)
-        for field in obj.__fields__:
+        for field in type(obj).model_fields:
             _set_recursively(getattr(obj, field), name, value)
 
     elif isinstance(obj, typing.Mapping):
@@ -47,7 +47,7 @@ def parse_timestamp(timestamp: int) -> datetime.datetime | None:
     return datetime.datetime.fromtimestamp(timestamp).astimezone()  # noqa: DTZ006
 
 
-class BaseModel(pydantic.BaseModel):
+class BaseModel(pydantic.BaseModel, arbitrary_types_allowed=True):
     """Client-aware pydantic base model."""
 
     client: CoreClient = pydantic.Field(repr=False)
@@ -67,11 +67,6 @@ class BaseModel(pydantic.BaseModel):
             value.update(current)
 
         return value
-
-    class Config:
-        """Config."""
-
-        arbitrary_types_allowed = True
 
 
 class DList(collections.UserList[typing.Any]):

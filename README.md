@@ -2,7 +2,11 @@
 
 Arknights python wrapper.
 
-This project aims to purely allow for data collection, no account automation is planned.
+Interacts directly with the game servers, no delays.
+
+支持**中文和 B 站**账户!
+
+<!-- Supports Chinese and BiliBili accounts -->
 
 ---
 
