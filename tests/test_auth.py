@@ -26,7 +26,7 @@ async def test_config(network: arkprts.NetworkSession) -> None:
 @pytest.fixture(scope="session")
 async def client(network: arkprts.NetworkSession) -> arkprts.Client:
     """Public global client."""
-    return arkprts.Client(arkprts.GuestAuth(max_sessions=1, network=network))
+    return arkprts.Client(arkprts.GuestAuth(max_sessions=1, cache=os.environ.get("GUEST_AUTH_CACHE"), network=network))
 
 
 @pytest.fixture(scope="session")
@@ -177,7 +177,7 @@ class MockGuestAuth(arkprts.GuestAuth):
 
 
 async def test_guest_auth(network: arkprts.NetworkSession) -> None:
-    auth = MockGuestAuth(max_sessions=2, network=network)
+    auth = MockGuestAuth(max_sessions=2, cache=os.environ.get("GUEST_AUTH_CACHE"), network=network)
 
     def count() -> collections.Counter[str]:
         return collections.Counter(session.server for session in auth.sessions)
