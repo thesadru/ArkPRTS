@@ -6,6 +6,7 @@ import pathlib
 import typing
 
 import nox
+from nox.command import CommandFailed
 
 nox.options.sessions = ["reformat", "lint", "type-check", "verify-types", "test", "prettier"]
 nox.options.reuse_existing_virtualenvs = True
@@ -140,10 +141,13 @@ def verify_types(session: nox.Session) -> None:
 
 def _try_install_prettier(session: nox.Session) -> bool:
     """Try to install prettier. Return False if failed."""
+    if session._runner.global_config.no_install:
+        return True
+
     try:
         session.run("npm", "install", "prettier", "prettier-plugin-toml", "--global", external=True)
-    except Exception as exception:  # noqa: BLE001: Nox throws a bare Exception
-        if str(exception) != "Program npm not found":
+    except CommandFailed as exception:
+        if exception.reason != "Program npm not found":
             raise
     else:
         return True

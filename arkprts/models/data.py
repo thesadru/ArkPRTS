@@ -71,6 +71,8 @@ class Status(base.BaseModel):
     """IDK. When sanity was last incremented."""
     last_ap_add_time: base.ArknightsTimestamp = pydantic.Field(alias="lastApAddTime")
     """IDK."""
+    last_online_ts: base.ArknightsTimestamp = pydantic.Field(alias="lastOnlineTs")
+    """IDK. When the player was last online."""
     main_stage_progress: typing.Optional[str] = pydantic.Field(alias="mainStageProgress")
     """Current main story stage ID. None if completed."""
     register_ts: base.ArknightsTimestamp = pydantic.Field(alias="registerTs")
@@ -91,6 +93,16 @@ class Status(base.BaseModel):
     """Default voice-over language."""
     avatar: Avatar
     """Selected avatar."""
+
+    # fmt: off
+    # optional:
+    monthly_subscription_start_time: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(None, alias="monthlySubscriptionStartTime")
+    """When the monthly subscription started."""
+    monthly_subscription_end_time: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(None, alias="monthlySubscriptionEndTime")
+    """When the monthly subscription is ending."""
+    tip_monthly_card_expire: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(None, alias="tipMonthlyCardExpire")
+    """IDK."""
+    # fmt: on
 
     @property
     def basic_item_inventory(self) -> typing.Mapping[str, int]:
@@ -289,7 +301,7 @@ class ConsumableExpire(base.BaseModel):
     """Amount of consumables."""
 
 
-class User(base.BaseModel):
+class User(base.BaseModel, extra="allow"):
     """User sync data. Not fully modeled."""
 
     status: Status

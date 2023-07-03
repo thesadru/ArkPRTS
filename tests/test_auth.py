@@ -17,17 +17,16 @@ async def network() -> arkprts.NetworkSession:
 
 
 async def test_config(network: arkprts.NetworkSession) -> None:
-    await network.load_network_config()
-    await network.load_version_config()
+    await network.load_version_config("all")
 
     assert all(versions for versions in network.versions.values())
-    assert all(versions for versions in network.versions.values())
+    assert all(domains for domains in network.domains.values())
 
 
 @pytest.fixture(scope="session")
 async def client(network: arkprts.NetworkSession) -> arkprts.Client:
     """Public global client."""
-    return arkprts.Client(arkprts.GuestAuth(max_sessions=1), network=network)
+    return arkprts.Client(arkprts.GuestAuth(max_sessions=1, network=network))
 
 
 @pytest.fixture(scope="session")
