@@ -2,3 +2,4 @@ aiohttp
 pydantic==2.*
 
 rsa
+pycryptodome
