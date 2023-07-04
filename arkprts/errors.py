@@ -1,4 +1,5 @@
 """Arkprts errors."""
+import json
 import typing
 
 
@@ -25,6 +26,25 @@ class ArkPrtsError(BaseArkprtsError):
     def __init__(self, data: typing.Mapping[str, typing.Any]) -> None:
         self.data = data
         super().__init__(f"[{data['result']}] {self.message} {data}")
+
+
+class GameServerError(BaseArkprtsError):
+    """Game server error."""
+
+    status_code: int
+    error: str
+    code: int
+    msg: str
+    info: typing.Mapping[str, typing.Any]
+
+    def __init__(self, data: typing.Mapping[str, typing.Any]) -> None:
+        self.status_code = data.get("statusCode", 400)
+        self.error = data["error"]
+        self.code = data.get("code", 0)
+        self.msg = data.get("msg", "")
+        self.info = json.loads(data.get("info", "{}"))
+
+        super().__init__(str(data))
 
 
 class GeetestError(ArkPrtsError):

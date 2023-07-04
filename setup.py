@@ -12,7 +12,7 @@ setup(
     include_package_data=True,
     package_data={"arkprts": ["py.typed"]},
     install_requires=["aiohttp", "pydantic==2.*"],
-    extras_require={"all": ["rsa"], "rsa": ["rsa"]},
+    extras_require={"all": ["rsa", "pycryptodome"], "rsa": ["rsa"], "aes": ["pycryptodome"]},
     long_description=pathlib.Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
     license="MIT",

@@ -18,7 +18,7 @@ User(...)
 >>> await auth.login_with_email_code("doctor@gmail.com")
 >>> client = arkprts.AutomationClient(auth=auth)
 >>> await client.login_with_token("...", "...")
->>> await client.claim_daily_reward()
+>>> await client.account_sync_data()
 """
 from __future__ import annotations
 
@@ -87,7 +87,7 @@ class CoreClient:
         return self.network.default_server
 
     async def request(self, endpoint: str, **kwargs: typing.Any) -> typing.Any:
-        """Authenticate a request."""
+        """Send an authenticated request to the arknights game server."""
         if self.gamedata and not self.gamedata.loaded:
             await self.gamedata.update_gamedata()
 

@@ -255,6 +255,9 @@ class NetworkSession:
                 resp.raise_for_status()
                 raise errors.InvalidContentTypeError(await resp.text()) from e
 
+            if data.get("error"):
+                raise errors.GameServerError(data)
+
             if resp.status != 200:
                 raise errors.InvalidStatusError(resp.status, data)
 
