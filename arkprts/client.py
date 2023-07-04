@@ -132,7 +132,7 @@ class Client(CoreClient):
         if not isinstance(self.auth, authn.Auth):
             raise RuntimeError("This client can only access public data.")  # noqa: TRY004  # isn't a type check
 
-        if not self.network.default_server:
+        if not self.auth.server:
             raise RuntimeError("Missing a default server for a private client.")
 
     async def get_raw_data(self) -> typing.Any:

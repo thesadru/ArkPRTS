@@ -192,7 +192,7 @@ class Character(base.BaseModel):
     """Operator potential. Starts at 0."""
     main_skill_lvl: int = pydantic.Field(alias="mainSkillLvl")
     """Operator skill level."""
-    skin: str
+    skin: str = pydantic.Field(validation_alias=pydantic.AliasChoices("skinId", "skin"))
     """Operator skin ID."""
     level: int
     """Operator level."""
@@ -301,7 +301,7 @@ class ConsumableExpire(base.BaseModel):
     """Amount of consumables."""
 
 
-class User(base.BaseModel, extra="allow"):
+class User(base.BaseModel, extra="ignore"):
     """User sync data. Not fully modeled."""
 
     status: Status
