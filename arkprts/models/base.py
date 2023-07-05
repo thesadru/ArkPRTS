@@ -1,4 +1,6 @@
 """Modified pydantic base model."""
+from __future__ import annotations
+
 import collections
 import datetime
 import typing
@@ -53,7 +55,7 @@ class BaseModel(pydantic.BaseModel, arbitrary_types_allowed=True):
     client: CoreClient = pydantic.Field(repr=False)
     """Client instance."""
 
-    def __init__(self, client: typing.Optional[CoreClient] = None, **kwargs: typing.Any) -> None:
+    def __init__(self, client: CoreClient | None = None, **kwargs: typing.Any) -> None:
         """Init."""
         super().__init__(client=_fake_client, **kwargs)
         if client:

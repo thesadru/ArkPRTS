@@ -1,7 +1,7 @@
 [project]
 name = "arkprts"
 requires-python = ">=3.9"
-version = "0.2.1"
+version = "0.2.2"
 
 [build-system]
 requires = ["setuptools"]

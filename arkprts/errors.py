@@ -1,4 +1,6 @@
 """Arkprts errors."""
+from __future__ import annotations
+
 import json
 import typing
 
@@ -8,7 +10,7 @@ class BaseArkprtsError(Exception):
 
     message: str = "Arkprts error."
 
-    def __init__(self, message: typing.Optional[str] = None) -> None:
+    def __init__(self, message: str | None = None) -> None:
         super().__init__(message or self.message)
 
 
