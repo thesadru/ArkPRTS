@@ -1053,7 +1053,7 @@ class GuestAuth(MultiAuth):
         logging.debug("Loading cached auth %s for %s.", auth["channel_uid"], auth["server"])
         try:
             auth = await Auth.from_token(server, auth["channel_uid"], auth["token"], network=self.network)
-        except errors.ArkPrtsError as e:
+        except errors.BaseArkprtsError as e:
             warnings.warn(f"Failed to load cached auth: {e}")
             # remove faulty auth from cache file
             data = list(self._load_cache())
