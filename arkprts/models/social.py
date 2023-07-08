@@ -184,7 +184,7 @@ class Player(PartialPlayer):
     team_v2: typing.Mapping[str, int] = pydantic.Field(alias="teamV2")
     """Amount of characters owned in each faction."""
     board: typing.Sequence[str]
-    """Factions with full trust. Shows up blue in-game."""
+    """Owned clues in the meeting room."""
     info_share: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(alias="infoShare")
     """IDK."""
     recent_visited: bool = pydantic.Field(alias="recentVisited")

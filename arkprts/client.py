@@ -47,7 +47,7 @@ class CoreClient:
         self,
         auth: authn.CoreAuth | None = None,
         *,
-        gamedata: gd.GameData | typing.Literal[False] | None = None,
+        gamedata: gd.GameData | str | typing.Literal[False] | None = None,
         network: authn.NetworkSession | None = None,
         server: authn.ArknightsServer | None = None,
         language: authn.ArknightsLanguage | None = None,
@@ -55,7 +55,7 @@ class CoreClient:
         """Initialize a client.
 
         auth: Authentication client. May be both public and private. GuestAuth by default.
-        gamedata: Game data client. May be disabled with False.
+        gamedata: Game data client or path to its location. May be disabled with False.
         network: Network session.
         server: Default server. Not recommended for large-scale usage.
         language: Default language. Fallbacks on the gamedata's default language.
@@ -63,8 +63,10 @@ class CoreClient:
         self.auth = auth or authn.GuestAuth(network=network)
         if gamedata is False:
             self.gamedata = None  # type: ignore
+        elif isinstance(gamedata, gd.GameData):
+            self.gamedata = gamedata
         else:
-            self.gamedata = gamedata or gd.GameData()
+            self.gamedata = gd.GameData(gamedata)
 
         if network:
             self.auth.network = network
@@ -78,13 +80,18 @@ class CoreClient:
 
     @property
     def network(self) -> authn.NetworkSession:
-        """Return the network of the client."""
+        """Return the network session of the client."""
         return self.auth.network
 
     @property
     def server(self) -> authn.ArknightsServer | None:
-        """Return the default server of the client."""
+        """Return the default server of the network session."""
         return self.network.default_server
+
+    @property
+    def language(self) -> authn.ArknightsLanguage | None:
+        """Return the default language of the gamedata client."""
+        return self.gamedata.language
 
     async def request(self, endpoint: str, **kwargs: typing.Any) -> typing.Any:
         """Send an authenticated request to the arknights game server."""

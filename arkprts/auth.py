@@ -1001,7 +1001,7 @@ class GuestAuth(MultiAuth):
         if cache is False:
             self.cache_path = None
         elif isinstance(cache, (pathlib.Path, str)):
-            self.cache_path = pathlib.Path(cache)
+            self.cache_path = pathlib.Path(cache).expanduser()
         elif cache is None:
             self.cache_path = pathlib.Path(tempfile.gettempdir()) / "arkprts_auth_cache.json"
         else:

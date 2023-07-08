@@ -48,7 +48,7 @@ class GameData:
 
     def __init__(self, directory: PathLike | None = None, *, language: ArknightsLanguage = "en_US") -> None:
         if directory:
-            self.directory = pathlib.Path(directory)
+            self.directory = pathlib.Path(directory).expanduser()
         else:
             self.directory = pathlib.Path(tempfile.gettempdir()) / "ArknightsGameData"
 
@@ -230,4 +230,5 @@ class GameData:
     def calculate_trust_level(self, trust: int) -> int:
         """Calculate trust level from trust points."""
         frames = self.get_excel("favor_table")["favor_frames"]
-        return bisect.bisect_left(frames, trust, key=lambda x: x["data"]["favor_point"])
+        key_frames = [frame["data"]["favor_point"] for frame in frames]
+        return bisect.bisect_left(key_frames, trust)

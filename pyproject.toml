@@ -1,7 +1,7 @@
 [project]
 name = "arkprts"
 requires-python = ">=3.9"
-version = "0.2.2"
+version = "0.2.3"
 
 [build-system]
 requires = ["setuptools"]
@@ -66,34 +66,34 @@ line-length = 130
 # TRY003: Long exception message
 # UP013: Functional TypedDict
 ignore = [
-  "A",
-  "ARG",
-  "EM",
-  "ERA",
-  "FBT",
-  "SLF",
-  "TCH",
-  "TD",
-  "ANN10",
-  "ANN401",
-  "B008",
-  "B027",
-  "B028",
-  "B905",
-  "C408",
-  "D105",
-  "E501",
-  "N805",
-  "PGH003",
-  "PLR0913",
-  "PLR2004",
-  "PLW2901",
-  "RET504",
-  "S101",
-  "S3",
-  "S607",
-  "TRY003",
-  "UP013",
+    "A",
+    "ARG",
+    "EM",
+    "ERA",
+    "FBT",
+    "SLF",
+    "TCH",
+    "TD",
+    "ANN10",
+    "ANN401",
+    "B008",
+    "B027",
+    "B028",
+    "B905",
+    "C408",
+    "D105",
+    "E501",
+    "N805",
+    "PGH003",
+    "PLR0913",
+    "PLR2004",
+    "PLW2901",
+    "RET504",
+    "S101",
+    "S3",
+    "S607",
+    "TRY003",
+    "UP013",
 ]
 # auto-fixing too intrusive
 # F401: Unused import

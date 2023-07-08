@@ -296,7 +296,7 @@ class ConsumableExpire(base.BaseModel):
     """Consumable expiration data."""
 
     ts: typing.Optional[base.ArknightsTimestamp]
-    """When the consumable expires."""
+    """When the consumable expires. Some consumables do not expire."""
     count: int
     """Amount of consumables."""
 

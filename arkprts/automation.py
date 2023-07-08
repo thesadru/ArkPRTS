@@ -54,6 +54,8 @@ def recursively_delete_dict(
             for i, v in enumerate(typing.cast("list[object]", value)):
                 if isinstance(v, dict):
                     recursively_delete_dict(target[key][i], typing.cast("dict[object, object]", v))
+                else:
+                    target[key].remove(v)
         else:
             del target[key]
 
@@ -221,6 +223,13 @@ class AutomationClient(CoreClient):
         """
         return await self.request("building/sync")
 
+    async def building_get_assist_report(self) -> typing.Any:
+        """Get base report.
+
+        APP behavior: Called when viewing base report in the control center.
+        """
+        return await self.request("building/getAssistReport")
+
     async def building_assign_char(self, room_slot_id: str, char_inst_id_list: typing.Sequence[int]) -> typing.Any:
         """Assign operators to a room.
 
@@ -300,6 +309,13 @@ class AutomationClient(CoreClient):
         """
         return await self.request("building/getClueBox")
 
+    async def building_get_daily_clue(self) -> typing.Any:
+        """Get a daily clue.
+
+        APP behavior: Called when claiming the daily clue in the meeting room.
+        """
+        return await self.request("building/getDailyClue")
+
     async def building_receive_clue_to_stock(self, clues: typing.Sequence[str]) -> typing.Any:
         """Claim clues gifted to your base by your friends.
 
@@ -348,12 +364,71 @@ class AutomationClient(CoreClient):
         }
         return await self.request("building/visitBuilding", json=data)
 
-    async def building_get_assist_report(self) -> typing.Any:
-        """Get base report.
+    async def building_get_clue_friend_list(self, id_list: typing.Sequence[str]) -> typing.Any:
+        """Get a list of friends able to receive clues.
 
-        App behavior: Called when viewing base report in the control center.
+        APP behavior: Called when viewing the clue board in the meeting room.
         """
-        return await self.request("building/getAssistReport")
+        return await self.request("building/getClueFriendList")
+
+    async def building_send_clue(self, friend_id: str, clue_id: str) -> typing.Any:
+        """Send a clue to a friend.
+
+        friend_id: Friend's ID.
+        clue_id: Clue ID to send.
+
+        APP behavior: Called when sending a clue to a friend.
+        """
+        data = {
+            "friendId": friend_id,
+            "clueId": clue_id,
+        }
+        return await self.request("building/sendClue", json=data)
+
+    async def building_start_info_share(self) -> typing.Any:
+        """Start a clue exchange.
+
+        APP behavior: Called when starting a clue exchange in the meeting room after gathering all clues.
+        """
+        return await self.request("building/startInfoShare")
+
+    async def social_get_friend_list(self, id_list: typing.Sequence[str]) -> typing.Any:
+        """Get a list of friends by ID.
+
+        APP behavior: Called after any request for friend IDs.
+        """
+        data = {
+            "idList": id_list,
+        }
+        return await self.request("social/getFriendList", json=data)
+
+    async def social_receive_social_point(self) -> typing.Any:
+        """Claim daily social shop points.
+
+        APP behavior: Called when claiming the daily social shop points.
+        """
+        return await self.request("social/receiveSocialPoint")
+
+    async def shop_get_social_good_list(self) -> typing.Any:
+        """Get the social shop product list.
+
+        APP behavior: Called when entering the social shop.
+        """
+        return await self.request("shop/getSocialGoodList")
+
+    async def shop_buy_social_good(self, good_id: str, count: int = 1) -> typing.Any:
+        """Buy a social shop product.
+
+        good_id: Product ID.
+        count: Probably amount to buy. This should always be 1.
+
+        APP behavior: Called when buying a social shop product.
+        """
+        data = {
+            "goodId": good_id,
+            "count": count,
+        }
+        return await self.request("shop/buySocialGood", json=data)
 
     async def gacha_sync_normal_gacha(self) -> typing.Any:
         """Sync recruitment data.
@@ -409,29 +484,6 @@ class AutomationClient(CoreClient):
             "slotId": slot_id,
         }
         return await self.request("gacha/finishNormalGacha", json=data)
-
-    # Maybe also get daily social points.
-
-    async def shop_get_social_good_list(self) -> typing.Any:
-        """Get the social shop product list.
-
-        APP behavior: Called when entering the social shop.
-        """
-        return await self.request("shop/getSocialGoodList")
-
-    async def shop_buy_social_good(self, good_id: str, count: int = 1) -> typing.Any:
-        """Buy a social shop product.
-
-        good_id: Product ID.
-        count: Probably amount to buy. This should always be 1.
-
-        APP behavior: Called when buying a social shop product.
-        """
-        data = {
-            "goodId": good_id,
-            "count": count,
-        }
-        return await self.request("shop/buySocialGood", json=data)
 
     async def get_battle_replay(self, battle_type: str, stage_id: str) -> typing.Any:
         """Get a replay of a stage.
