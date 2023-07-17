@@ -2,6 +2,7 @@
 
 Any field description prefixed with IDK means it's just a guess.
 """
+import datetime
 import typing
 
 import pydantic
@@ -44,17 +45,17 @@ class Status(base.BaseModel):
     recruit_license: int = pydantic.Field(alias="recruitLicense")
     """Amount of recruitment permit."""
     progress: int = pydantic.Field(repr=False)
-    """IDK."""
+    """IDK. Seems to always be 3000."""
     buy_ap_remain_times: int = pydantic.Field(alias="buyApRemainTimes", repr=False)
-    """IDK. Ap refers to sanity."""
+    """How many more times you can refresh sanity with originite prime."""
     ap_limit_up_flag: bool = pydantic.Field(alias="apLimitUpFlag", repr=False)
-    """IDK. Ap refers to sanity."""
+    """IDK. Ap refers to sanity. Always zero."""
     uid: str
     """User ID."""
     flags: typing.Mapping[str, bool] = pydantic.Field(repr=False)
     """Completed stories."""
     ap: int
-    """Current sanity. Actually not a true value."""
+    """Sanity value when last incrememnted. See current_sanity for true value."""
     max_ap: int = pydantic.Field(alias="maxAp")
     """Max sanity."""
     pay_diamond: int = pydantic.Field(alias="payDiamond")
@@ -68,11 +69,11 @@ class Status(base.BaseModel):
     practice_ticket: int = pydantic.Field(alias="practiceTicket")
     """Amount of training permits."""
     last_refresh_ts: base.ArknightsTimestamp = pydantic.Field(alias="lastRefreshTs")
-    """IDK. When sanity was last incremented."""
+    """Last time a sanity refresh was used. IDK the influence on ap calculation."""
     last_ap_add_time: base.ArknightsTimestamp = pydantic.Field(alias="lastApAddTime")
-    """IDK."""
+    """Last time AP was incremented/calculated."""
     last_online_ts: base.ArknightsTimestamp = pydantic.Field(alias="lastOnlineTs")
-    """IDK. When the player was last online."""
+    """When the player was last online."""
     main_stage_progress: typing.Optional[str] = pydantic.Field(alias="mainStageProgress")
     """Current main story stage ID. None if completed."""
     register_ts: base.ArknightsTimestamp = pydantic.Field(alias="registerTs")
@@ -80,7 +81,7 @@ class Status(base.BaseModel):
     server_name: str = pydantic.Field(alias="serverName")
     """Server name. Should always be Terra."""
     avatar_id: str = pydantic.Field(alias="avatarId", repr=False)
-    """IDK. Always 0."""
+    """IDK. Always "0"."""
     resume: str
     """Player display bio."""
     friend_num_limit: int = pydantic.Field(alias="friendNumLimit")
@@ -101,8 +102,16 @@ class Status(base.BaseModel):
     monthly_subscription_end_time: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(None, alias="monthlySubscriptionEndTime")
     """When the monthly subscription is ending."""
     tip_monthly_card_expire: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(None, alias="tipMonthlyCardExpire")
-    """IDK."""
+    """IDK. Seems to be close to register time, so likely the first the monthly card was used?"""
     # fmt: on
+
+    @property
+    def current_ap(self) -> int:
+        """Current sanity."""
+        last_calculation = max(self.last_refresh_ts, self.last_ap_add_time)
+        since_calculation = last_calculation - datetime.datetime.now(tz=datetime.timezone.utc)
+        ap_add_amount = since_calculation // datetime.timedelta(minutes=6)
+        return self.ap + ap_add_amount
 
     @property
     def basic_item_inventory(self) -> typing.Mapping[str, int]:
@@ -160,7 +169,7 @@ class Skill(base.BaseModel):
     specialize_level: int = pydantic.Field(alias="specializeLevel")
     """Skill mastery level."""
     complete_upgrade_time: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(alias="completeUpgradeTime")
-    """IDK. Time left until skill upgrade is complete. Is raw -1 if not upgrading."""
+    """IDK. Time of mastery upgrade completion. Is raw -1 if not upgrading."""
 
     @property
     def static(self) -> base.DDict:
@@ -252,9 +261,9 @@ class Troops(base.BaseModel):
     char_group: typing.Mapping[str, CharGroup] = pydantic.Field(alias="charGroup")
     """Additional operator data."""
     char_mission: typing.Mapping[str, typing.Mapping[str, int]] = pydantic.Field(alias="charMission", repr=False)
-    """IDK. Special operation missions."""
+    """IDK. Special operation missions. See GameData char_meta_table."""
     addon: base.DDict = pydantic.Field(default_factory=base.DDict, repr=False)
-    """IDK."""
+    """IDK. Unlockable character story and stage."""
 
 
 class Skins(base.BaseModel):
@@ -287,7 +296,7 @@ class Social(base.BaseModel):
     yesterday_reward: base.DDict = pydantic.Field(alias="yesterdayReward")
     """IDK. Clue exchange data."""
     y_crisis_ss: typing.Union[str, typing.Any] = pydantic.Field(alias="yCrisisSs", repr=False)
-    """IDK."""
+    """IDK. Crisis refers to contingency contract. Always empty string."""
     medal_board: base.DDict = pydantic.Field(default_factory=base.DDict, alias="medalBoard")
     """Medal board."""
 

@@ -42,7 +42,7 @@ class UniEquip(base.BaseModel):
     """Equipped modules."""
 
     hide: bool
-    """IDK. Whether the module is publicly hidden."""
+    """Whether the player may see the modules. For operators below E2."""
     locked: bool
     """Whether module access is locked."""
     level: int
@@ -186,8 +186,8 @@ class Player(PartialPlayer):
     board: typing.Sequence[str]
     """Owned clues in the meeting room."""
     info_share: typing.Optional[base.ArknightsTimestamp] = pydantic.Field(alias="infoShare")
-    """IDK."""
+    """Last time clue exchange was activated."""
     recent_visited: bool = pydantic.Field(alias="recentVisited")
-    """IDK."""
+    """IDK. Whether the player base has recently been visited."""
     info_share_visited: typing.Optional[int] = pydantic.Field(None, alias="infoShareVisited")
-    """IDK."""
+    """IDK. Whether the last player base visit yielded any credit shop credits."""

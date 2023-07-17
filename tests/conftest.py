@@ -25,7 +25,7 @@ def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "blocking: mark test as blocking")
 
 
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+def pytest_collection_modifyitems(config: pytest.Config, items: typing.Sequence[pytest.Item]) -> None:
     if config.getoption("--runblocking"):
         return
 

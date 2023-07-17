@@ -4,7 +4,7 @@ Arknights python wrapper.
 
 Interacts directly with the game servers, no delays.
 
-支持**中文和 B 站**账户!
+支持**中文和B站**账户!
 
 <!-- Supports Chinese and BiliBili accounts -->
 

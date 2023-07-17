@@ -17,13 +17,16 @@ User(...)
 >>> auth = arkprts.YostarAuth("en")
 >>> await auth.login_with_email_code("doctor@gmail.com")
 >>> client = arkprts.AutomationClient(auth=auth)
->>> await client.login_with_token("...", "...")
 >>> await client.account_sync_data()
 """
 from __future__ import annotations
 
+import base64
+import io
+import json
 import typing
 import warnings
+import zipfile
 
 from . import auth as authn
 from . import gamedata as gd
@@ -209,6 +212,16 @@ class Client(CoreClient):
             server=server,
         )
 
+    async def get_raw_battle_replay(self, battle_type: str, stage_id: str) -> typing.Any:
+        """Get a battle replay."""
+        self._assert_private()
+
+        data = await self.request(f"{battle_type}/getBattleReplay", json={"stageId": stage_id})
+
+        replay_data = base64.b64decode(data["battleReplay"])
+        with zipfile.ZipFile(io.BytesIO(replay_data), "r") as z, z.open("default_entry") as f:
+            return json.load(f)
+
     async def search_players(
         self,
         nickname: str,
@@ -250,3 +263,8 @@ class Client(CoreClient):
         """Get user sync data and return a model. Use raw data for more info."""
         data = await self.get_raw_data()
         return models.User(client=self, **data["user"])
+
+    async def get_battle_replay(self, battle_type: str, stage_id: str) -> models.BattleReplay:
+        """Get a battle replay and return a model."""
+        data = await self.get_raw_battle_replay(battle_type, stage_id)
+        return models.BattleReplay(client=self, **data)

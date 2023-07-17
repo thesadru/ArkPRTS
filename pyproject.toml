@@ -1,7 +1,7 @@
 [project]
 name = "arkprts"
 requires-python = ">=3.9"
-version = "0.2.4"
+version = "0.2.5"
 
 [build-system]
 requires = ["setuptools"]
@@ -52,6 +52,7 @@ line-length = 130
 # B905: zip without strict= (ugly)
 # C408: Unnecessary dict call (ugly)
 # D105: Missing docstring in magic method (useless)
+# FA100: Missing future annotations.
 # E501: Line too long (black already manages this)
 # N805: First argument is not self (pydantic)
 # PGH003: Specific rules when ignoring type issues
@@ -82,6 +83,7 @@ ignore = [
     "B905",
     "C408",
     "D105",
+    "FA100",
     "E501",
     "N805",
     "PGH003",

@@ -288,6 +288,13 @@ class AutomationClient(CoreClient):
         }
         return await self.request("building/deliveryBatchOrder", json=data)
 
+    async def building_gain_all_intimacy(self) -> typing.Any:
+        """Claim trust increase of all operators stationed in the base.
+
+        APP behavior: Called when claiming trust of all operators in the base every 12h.
+        """
+        return await self.request("building/gainAllIntimacy")
+
     async def building_accelerate_solution(self, slot_id: str, cost: int) -> typing.Any:
         """Accelerate a room with drones.
 
@@ -392,6 +399,18 @@ class AutomationClient(CoreClient):
         """
         return await self.request("building/startInfoShare")
 
+    async def building_get_meetingroom_reward(self, type: typing.Sequence[int]) -> typing.Any:
+        """Get rewards from a clue exchange and such.
+
+        type: Array of booleans. No idea what they correspond to. I got [0, 1]
+
+        APP behavior: Called when entering the base.
+        """
+        data = {
+            "type": type,
+        }
+        return await self.request("building/getMeetingroomReward", json=data)
+
     async def social_get_friend_list(self, id_list: typing.Sequence[str]) -> typing.Any:
         """Get a list of friends by ID.
 
@@ -485,8 +504,10 @@ class AutomationClient(CoreClient):
         }
         return await self.request("gacha/finishNormalGacha", json=data)
 
-    async def get_battle_replay(self, battle_type: str, stage_id: str) -> typing.Any:
+    async def battle_get_battle_replay(self, battle_type: str, stage_id: str) -> typing.Any:
         """Get a replay of a stage.
+
+        Needs to be decrypted with decrypt_battle_replay.
 
         stage_id: Stage ID.
 

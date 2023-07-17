@@ -46,7 +46,7 @@ def parse_timestamp(timestamp: int) -> datetime.datetime | None:
     if timestamp in (0, -1):
         return None
 
-    return datetime.datetime.fromtimestamp(timestamp).astimezone()  # noqa: DTZ006
+    return datetime.datetime.fromtimestamp(int(timestamp)).astimezone()
 
 
 class BaseModel(pydantic.BaseModel, arbitrary_types_allowed=True):
@@ -65,7 +65,9 @@ class BaseModel(pydantic.BaseModel, arbitrary_types_allowed=True):
     def _fix_amiya(cls, value: typing.Any, info: pydantic.ValidationInfo) -> typing.Any:
         """Flatten Amiya to only keep her selected form if applicable."""
         if value and value.get("tmpl"):
-            current = value["tmpl"][value["currentTmpl"]]
+            # tmplId present in battle replays
+            current_tmpl = value["currentTmpl"] if "currentTmpl" in value else value["tmplId"]
+            current = value["tmpl"][current_tmpl]
             value.update(current)
 
         return value

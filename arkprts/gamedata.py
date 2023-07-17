@@ -24,8 +24,8 @@ __all__ = ("GameData",)
 
 PathLike = typing.Union[pathlib.Path, str]
 
-GITHUB_REPOSITORY = "aelurum/ArknightsGameData"  # zh-tw fork
-FALLBACK_GITHUB_REPOSITORY = "Kengxxiao/ArknightsGameData"
+GITHUB_REPOSITORY = "Kengxxiao/ArknightsGameData"
+TW_GITHUB_REPOSITORY = "aelurum/ArknightsGameData"  # zh-tw fork
 RELEVANT_FILES = r"excel"
 
 logger: logging.Logger = logging.getLogger("arkprts.gamedata")
@@ -163,12 +163,12 @@ class GameData:
 
             self.loaded = True
 
-    def _get_data(self, filename: str, *, language: str | None = None) -> models.DDict:
+    def _get_data(self, filename: str, *, language: str | None = None) -> typing.Any:
         """Get a file."""
         language = language or self.language
 
         if self._cache.get(language, {}).get(filename):
-            return models.DDict(self._cache[language][filename])
+            return self._cache[language][filename]
 
         path = self.directory / language / "gamedata" / filename
         if not path.exists():
@@ -179,11 +179,11 @@ class GameData:
 
         self._cache.setdefault(language, {})[filename] = data
 
-        return models.DDict(data)
+        return data
 
     def get_excel(self, name: str, *, language: str | None = None) -> models.DDict:
         """Get an excel table file."""
-        return self._get_data(f"excel/{name}.json", language=language)
+        return models.DDict(self._get_data(f"excel/{name}.json", language=language))
 
     def __getitem__(self, name: str) -> models.DDict:
         """Get an excel table file."""

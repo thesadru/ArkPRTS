@@ -1,8 +1,10 @@
 """Test arkprts client."""
+import typing
+
 import arkprts
 
 
-def _force_forbid(cls: type[arkprts.models.BaseModel]) -> None:
+def _force_forbid(cls: typing.Type[arkprts.models.BaseModel]) -> None:
     """Force forbid extra."""
     cls.model_config["extra"] = "forbid"
     for subclass in cls.__subclasses__():

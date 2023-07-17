@@ -192,7 +192,7 @@ RawAuthMapping = typing.TypedDict("RawAuthMapping", {"server": ArknightsServer, 
 def parse_server(identifier: ArknightsIdentifier) -> tuple[ArknightsDistributor, ArknightsServer, ArknightsLanguage]:
     """Parse a server, distributor, or language into a distributor, server, and language."""
     if identifier not in REGION_IDENTIFIER_MAPPING:
-        raise ValueError(f"Invalid region, server, or language {identifier!r}")
+        raise ValueError(f"Invalid distributor, server, or language {identifier!r}")
 
     result = REGION_IDENTIFIER_MAPPING[identifier]
     if result is None:
@@ -375,7 +375,7 @@ class CoreAuth(typing.Protocol):
         self,
         endpoint: str,
         *,
-        region: ArknightsServer | None = None,
+        server: ArknightsServer | None = None,
         **kwargs: typing.Any,
     ) -> typing.Any:
         """Send an authenticated request to the arkights game server."""
@@ -385,9 +385,9 @@ class Auth(abc.ABC, CoreAuth):
     """Authentication client for single sessions."""
 
     server: ArknightsServer
-    """Arknights region."""
-    distributor: ArknightsDistributor
     """Arknights server."""
+    distributor: ArknightsDistributor
+    """Arknights distributor."""
     network: NetworkSession
     """Network session."""
     device_ids: tuple[str, str, str]
@@ -442,7 +442,7 @@ class Auth(abc.ABC, CoreAuth):
     ) -> typing.Any:
         """Send an authenticated request to the arknights game server."""
         if server and server != self.server:
-            raise ValueError(f"Single-session client is bound to {self.server!r} region.")
+            raise ValueError(f"Single-session client is bound to {self.server!r} server.")
 
         if not self.session.uid:
             raise errors.NotLoggedInError("Not logged in.")
@@ -521,27 +521,27 @@ class Auth(abc.ABC, CoreAuth):
     @classmethod
     async def from_token(
         cls,
-        region: ArknightsServer,
+        server: ArknightsServer,
         channel_uid: str,
         token: str,
         *,
         network: NetworkSession | None = None,
     ) -> Auth:
         """Create a client from a token."""
-        if region in ("en", "jp", "kr"):
-            auth = YostarAuth(region, network=network)
+        if server in ("en", "jp", "kr"):
+            auth = YostarAuth(server, network=network)
             await auth.login_with_token(channel_uid, token)
-        elif region == "cn":
-            auth = HypergryphAuth(region, network=network)
+        elif server == "cn":
+            auth = HypergryphAuth(server, network=network)
             await auth.login_with_token(channel_uid, token)
-        elif region == "bili":
-            auth = BilibiliAuth(region, network=network)
+        elif server == "bili":
+            auth = BilibiliAuth(server, network=network)
             await auth.login_with_token(channel_uid, token)
-        elif region == "tw":
-            auth = LongchengAuth(region, network=network)
+        elif server == "tw":
+            auth = LongchengAuth(server, network=network)
             await auth.login_with_token(channel_uid, token)
         else:
-            raise ValueError(f"Cannot create a generic auth client for region {region!r}")
+            raise ValueError(f"Cannot create a generic auth client for server {server!r}")
 
         return auth
 
@@ -893,7 +893,7 @@ class MultiAuth(CoreAuth):
 
     # may be exceeded if multiple sessions are created at once
     max_sessions: int
-    """Maximum number of concurrent sessions per region."""
+    """Maximum number of concurrent sessions per server."""
     sessions: list[AuthSession]
     """Authentication sessions."""
 
