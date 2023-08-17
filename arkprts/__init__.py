@@ -4,3 +4,4 @@ from .auth import *
 from .automation import *
 from .client import *
 from .gamedata import *
+from .network import *

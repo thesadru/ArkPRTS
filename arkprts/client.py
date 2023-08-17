@@ -31,6 +31,7 @@ import zipfile
 from . import auth as authn
 from . import gamedata as gd
 from . import models
+from . import network as netn
 
 if typing.TYPE_CHECKING:
     from typing_extensions import Self
@@ -51,9 +52,9 @@ class CoreClient:
         auth: authn.CoreAuth | None = None,
         *,
         gamedata: gd.GameData | str | typing.Literal[False] | None = None,
-        network: authn.NetworkSession | None = None,
-        server: authn.ArknightsServer | None = None,
-        language: authn.ArknightsLanguage | None = None,
+        network: netn.NetworkSession | None = None,
+        server: netn.ArknightsServer | None = None,
+        language: netn.ArknightsLanguage | None = None,
     ) -> None:
         """Initialize a client.
 
@@ -82,17 +83,17 @@ class CoreClient:
             self.gamedata.language = language
 
     @property
-    def network(self) -> authn.NetworkSession:
+    def network(self) -> netn.NetworkSession:
         """Return the network session of the client."""
         return self.auth.network
 
     @property
-    def server(self) -> authn.ArknightsServer | None:
+    def server(self) -> netn.ArknightsServer | None:
         """Return the default server of the network session."""
         return self.network.default_server
 
     @property
-    def language(self) -> authn.ArknightsLanguage | None:
+    def language(self) -> netn.ArknightsLanguage | None:
         """Return the default language of the gamedata client."""
         return self.gamedata.language
 
@@ -116,9 +117,9 @@ class CoreClient:
         cls,
         channel_uid: str,
         token: str,
-        server: authn.ArknightsServer = "en",
+        server: netn.ArknightsServer = "en",
         *,
-        network: authn.NetworkSession | None = None,
+        network: netn.NetworkSession | None = None,
         gamedata: gd.GameData | None = None,
     ) -> Self:
         """Create a client from a token."""
@@ -157,7 +158,7 @@ class Client(CoreClient):
         sort_key: typing.Sequence[str] = ["level"],
         param: typing.Mapping[str, str] = {},
         *,
-        server: authn.ArknightsServer | None = None,
+        server: netn.ArknightsServer | None = None,
     ) -> typing.Any:
         """Request sortedusers."""
         data = await self.request(
@@ -173,7 +174,7 @@ class Client(CoreClient):
         self,
         ids: typing.Sequence[str],
         *,
-        server: authn.ArknightsServer | None = None,
+        server: netn.ArknightsServer | None = None,
     ) -> typing.Any:
         """Get detailed player info. You don't need to be friends actually."""
         return await self.request("social/getFriendList", json={"idList": ids}, server=server)
@@ -182,7 +183,7 @@ class Client(CoreClient):
         self,
         ids: typing.Sequence[str],
         *,
-        server: authn.ArknightsServer | None = None,
+        server: netn.ArknightsServer | None = None,
     ) -> typing.Any:
         """Get player info."""
         return await self.request("social/searchPlayer", json={"idList": ids}, server=server)
@@ -190,7 +191,7 @@ class Client(CoreClient):
     async def get_raw_friend_ids(
         self,
         *,
-        server: authn.ArknightsServer | None = None,
+        server: netn.ArknightsServer | None = None,
     ) -> typing.Any:
         """Get friends."""
         self._assert_private()
@@ -202,7 +203,7 @@ class Client(CoreClient):
         nickname: str,
         nicknumber: str = "",
         *,
-        server: authn.ArknightsServer | None = None,
+        server: netn.ArknightsServer | None = None,
     ) -> typing.Any:
         """Search for a nickname."""
         return await self._get_social_sort_list(
@@ -227,7 +228,7 @@ class Client(CoreClient):
         nickname: str,
         nicknumber: str = "",
         *,
-        server: authn.ArknightsServer | None = None,
+        server: netn.ArknightsServer | None = None,
         limit: int | None = None,
     ) -> typing.Sequence[models.Player]:
         """Search for a player and return a model."""
@@ -242,7 +243,7 @@ class Client(CoreClient):
         self,
         ids: typing.MutableSequence[str],
         *,
-        server: authn.ArknightsServer | None = None,
+        server: netn.ArknightsServer | None = None,
     ) -> typing.Sequence[models.Player]:
         """Get players and return a model."""
         data = await self.get_raw_player_info(ids, server=server)
@@ -251,7 +252,7 @@ class Client(CoreClient):
     async def get_friends(
         self,
         *,
-        server: authn.ArknightsServer | None = None,
+        server: netn.ArknightsServer | None = None,
         limit: int | None = None,
     ) -> typing.Sequence[models.Player]:
         """Get friends and return a model."""

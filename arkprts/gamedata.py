@@ -17,8 +17,8 @@ import typing
 
 import aiohttp
 
-from arkprts.auth import ArknightsLanguage
 from arkprts.models import base as models
+from arkprts.network import ArknightsLanguage
 
 __all__ = ("GameData",)
 

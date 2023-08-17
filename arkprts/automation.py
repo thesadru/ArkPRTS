@@ -12,9 +12,9 @@ import time
 import typing
 import zipfile
 
-from arkprts import auth as authn
-from arkprts import gamedata as gd
-
+from . import auth as authn
+from . import gamedata as gd
+from . import network as netn
 from .client import CoreClient
 
 __all__ = ["AutomationClient"]
@@ -145,9 +145,9 @@ class AutomationClient(CoreClient):
         auth: authn.Auth | None = None,
         *,
         gamedata: gd.GameData | None = None,
-        network: authn.NetworkSession | None = None,
-        server: authn.ArknightsServer | None = None,
-        language: authn.ArknightsLanguage | None = None,
+        network: netn.NetworkSession | None = None,
+        server: netn.ArknightsServer | None = None,
+        language: netn.ArknightsLanguage | None = None,
     ) -> None:
         super().__init__(auth, gamedata=gamedata, network=network, server=server, language=language)
         self.data = {}

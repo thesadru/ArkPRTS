@@ -166,7 +166,7 @@ def test_tw_client(tw_client: arkprts.Client) -> None:
 class MockGuestAuth(arkprts.GuestAuth):
     async def request(
         self,
-        domain: arkprts.auth.ArknightsDomain,
+        domain: arkprts.ArknightsDomain,
         endpoint: typing.Optional[str] = None,
         **kwargs: typing.Any,
     ) -> typing.Any:
