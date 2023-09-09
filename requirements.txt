@@ -3,3 +3,6 @@ pydantic==2.*
 
 rsa
 pycryptodome
+UnityPy
+bson
+Pillow

@@ -182,8 +182,6 @@ class Auth(abc.ABC, CoreAuth):
 
     server: netn.ArknightsServer
     """Arknights server."""
-    distributor: netn.ArknightsDistributor
-    """Arknights distributor."""
     network: netn.NetworkSession
     """Network session."""
     device_ids: tuple[str, str, str]
@@ -200,7 +198,7 @@ class Auth(abc.ABC, CoreAuth):
         if server is None and network is not None:
             server = network.default_server
 
-        self.distributor, self.server, _ = netn.parse_server(server or "en")
+        self.server = server or "en"
         self.network = network or netn.NetworkSession(default_server=self.server)
         self.session = AuthSession(self.server, "", "")
         self.device_ids = create_random_device_ids()
@@ -254,8 +252,8 @@ class Auth(abc.ABC, CoreAuth):
     ) -> tuple[str, str]:
         """Get an arknights uid and u8 token from a channel uid and access token."""
         logger.debug("Getting u8 token for %s.", channel_uid)
-        channel_id = {"hypergryph": "1", "bilibili": "2", "yostar": "3"}[self.distributor]
-        if self.distributor == "yostar":
+        channel_id = {"cn": "1", "bili": "2", "en": "3", "jp": "3", "kr": "3"}[self.server]
+        if channel_id == "3":
             extension = {"uid": channel_uid, "token": access_token}
         else:
             extension = {"uid": channel_uid, "access_token": access_token}
@@ -290,7 +288,7 @@ class Auth(abc.ABC, CoreAuth):
         if not self.network.versions.get(self.server):
             await self.network.load_version_config(self.server)
 
-        network_version = {"hypergryph": "5", "bilibili": "5", "yostar": "1"}[self.distributor]
+        network_version = {"cn": "5", "bili": "5", "en": "1", "jp": "1", "kr": "1"}[self.server]
 
         body = {
             "platform": 1,

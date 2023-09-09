@@ -35,7 +35,6 @@ from . import errors
 __all__ = [
     "ArknightsDistributor",
     "ArknightsDomain",
-    "ArknightsLanguage",
     "ArknightsServer",
     "NetworkSession",
 ]
@@ -46,8 +45,6 @@ logger: logging.Logger = logging.getLogger("arkprts.auth")
 
 ArknightsDistributor = typing.Literal["yostar", "hypergryph", "bilibili", "longcheng"]
 ArknightsServer = typing.Literal["en", "jp", "kr", "cn", "bili", "tw"]
-ArknightsLanguage = typing.Literal["en_US", "ja_JP", "ko_KR", "zh_CN", "zh_TW"]
-ArknightsIdentifier = typing.Union[ArknightsDistributor, ArknightsServer, ArknightsLanguage]
 
 ArknightsDomain = typing.Literal["gs", "as", "u8", "hu", "hv", "rc", "an", "prean", "sl", "of", "pkgAd", "pkgIOS"]
 NETWORK_ROUTES: dict[ArknightsServer, str] = {
@@ -66,44 +63,6 @@ DEFAULT_HEADERS: typing.Mapping[str, str] = {
     "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 11; KB2000 Build/RP1A.201005.001)",
     "Connection": "Keep-Alive",
 }
-
-# allows to user to pass in any bogus and still pass
-REGION_IDENTIFIER_MAPPING: dict[
-    ArknightsIdentifier,
-    tuple[ArknightsDistributor, ArknightsServer, ArknightsLanguage] | None,
-] = {
-    # Distributor
-    "yostar": ("yostar", "en", "en_US"),
-    "hypergryph": ("hypergryph", "cn", "zh_CN"),
-    "bilibili": ("bilibili", "bili", "zh_CN"),
-    "longcheng": ("longcheng", "cn", "zh_TW"),
-    # Server
-    "en": ("yostar", "en", "en_US"),
-    "jp": ("yostar", "jp", "ja_JP"),
-    "kr": ("yostar", "kr", "ko_KR"),
-    "cn": ("hypergryph", "cn", "zh_CN"),
-    "bili": ("bilibili", "bili", "zh_CN"),
-    "tw": ("longcheng", "cn", "zh_TW"),
-    # Language
-    "en_US": ("yostar", "en", "en_US"),
-    "ja_JP": ("yostar", "jp", "ja_JP"),
-    "ko_KR": ("yostar", "kr", "ko_KR"),
-    "zh_CN": ("hypergryph", "cn", "zh_CN"),
-    "zh_TW": ("longcheng", "cn", "zh_TW"),
-}
-
-
-def parse_server(identifier: ArknightsIdentifier) -> tuple[ArknightsDistributor, ArknightsServer, ArknightsLanguage]:
-    """Parse a server, distributor, or language into a distributor, server, and language."""
-    if identifier not in REGION_IDENTIFIER_MAPPING:
-        raise ValueError(f"Invalid distributor, server, or language {identifier!r}")
-
-    result = REGION_IDENTIFIER_MAPPING[identifier]
-    if result is None:
-        raise ValueError(f"{identifier} is not supported")
-
-    return result
-
 
 # aiohttp uses a very noisy library
 _charset_normalizer_logger = logging.getLogger("charset_normalizer")

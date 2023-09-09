@@ -11,9 +11,11 @@ import arkprts
 
 
 @pytest.fixture(scope="session")
-async def network() -> arkprts.NetworkSession:
+async def network() -> typing.AsyncIterator[arkprts.NetworkSession]:
     """Network session."""
-    return arkprts.NetworkSession()
+    network = arkprts.NetworkSession()
+    yield network
+    await network.close()
 
 
 async def test_config(network: arkprts.NetworkSession) -> None:
@@ -131,35 +133,30 @@ async def tw_client(network: arkprts.NetworkSession) -> arkprts.Client:
 def test_jp_client(jp_client: arkprts.Client) -> None:
     assert isinstance(jp_client.auth, arkprts.Auth)
     assert jp_client.auth.server == "jp"
-    assert jp_client.auth.distributor == "yostar"
     assert jp_client.auth.session.uid
 
 
 def test_kr_client(kr_client: arkprts.Client) -> None:
     assert isinstance(kr_client.auth, arkprts.Auth)
     assert kr_client.auth.server == "kr"
-    assert kr_client.auth.distributor == "yostar"
     assert kr_client.auth.session.uid
 
 
 def test_cn_client(cn_client: arkprts.Client) -> None:
     assert isinstance(cn_client.auth, arkprts.Auth)
     assert cn_client.auth.server == "cn"
-    assert cn_client.auth.distributor == "hypergryph"
     assert cn_client.auth.session.uid
 
 
 def test_bili_client(bili_client: arkprts.Client) -> None:
     assert isinstance(bili_client.auth, arkprts.Auth)
     assert bili_client.auth.server == "bili"
-    assert bili_client.auth.distributor == "bilibili"
     assert bili_client.auth.session.uid
 
 
 def test_tw_client(tw_client: arkprts.Client) -> None:
     assert isinstance(tw_client.auth, arkprts.Auth)
     assert tw_client.auth.server == "tw"
-    assert tw_client.auth.distributor == "longcheng"
     assert tw_client.auth.session.uid
 
 

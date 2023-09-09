@@ -174,7 +174,7 @@ class Skill(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this skill."""
-        return self.client.gamedata.skill_table[self.skill_id]
+        return self.client.assets.skill_table[self.skill_id]
 
 
 class Equip(base.BaseModel):
@@ -227,12 +227,12 @@ class Character(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this operator."""
-        return self.client.gamedata.character_table[self.char_id]
+        return self.client.assets.character_table[self.char_id]
 
     @property
     def trust(self) -> int:
         """Trust calculated from favor_point."""
-        return self.client.gamedata.calculate_trust_level(self.favor_point)
+        return self.client.assets.calculate_trust_level(self.favor_point)
 
 
 class CharGroup(base.BaseModel):
@@ -244,7 +244,7 @@ class CharGroup(base.BaseModel):
     @property
     def trust(self) -> int:
         """Trust calculated from favor_point."""
-        return self.client.gamedata.calculate_trust_level(self.favor_point)
+        return self.client.assets.calculate_trust_level(self.favor_point)
 
 
 class Troops(base.BaseModel):
@@ -261,7 +261,7 @@ class Troops(base.BaseModel):
     char_group: typing.Mapping[str, CharGroup] = pydantic.Field(alias="charGroup")
     """Additional operator data."""
     char_mission: typing.Mapping[str, typing.Mapping[str, int]] = pydantic.Field(alias="charMission", repr=False)
-    """IDK. Special operation missions. See GameData char_meta_table."""
+    """IDK. Special operation missions.."""
     addon: base.DDict = pydantic.Field(default_factory=base.DDict, repr=False)
     """IDK. Unlockable character story and stage."""
 
@@ -326,5 +326,5 @@ class User(base.BaseModel, extra="ignore"):
     inventory: typing.Mapping[str, int]
     """Inventory data. Item ID to amount.
 
-    To access the static data for an item, use `client.gamedata.get_item(item_id)`.
+    To access the static data for an item, use `client.assets.get_item(item_id)`.
     """

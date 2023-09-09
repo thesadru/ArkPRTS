@@ -35,7 +35,7 @@ class Skill(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this skill."""
-        return self.client.gamedata.skill_table[self.skill_id]
+        return self.client.assets.skill_table[self.skill_id]
 
 
 class UniEquip(base.BaseModel):
@@ -82,12 +82,12 @@ class AssistChar(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this operator."""
-        return self.client.gamedata.character_table[self.char_id]
+        return self.client.assets.character_table[self.char_id]
 
     @property
     def trust(self) -> int:
         """Trust calculated from favor_point."""
-        return self.client.gamedata.calculate_trust_level(self.favor_point)
+        return self.client.assets.calculate_trust_level(self.favor_point)
 
 
 class PlacedMedal(base.BaseModel):
@@ -101,7 +101,7 @@ class PlacedMedal(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this medal."""
-        return self.client.gamedata.medal_table.medal_list[self.id]
+        return self.client.assets.medal_table.medal_list[self.id]
 
 
 class MedalBoardCustom(base.BaseModel):
@@ -122,7 +122,7 @@ class MedalBoardTemplate(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this medal board."""
-        groups = self.client.gamedata.medal_table.medal_type_data.activity_medal.group_data
+        groups = self.client.assets.medal_table.medal_type_data.activity_medal.group_data
         return next(i for i in groups if i.group_id == self.group_id)
 
 

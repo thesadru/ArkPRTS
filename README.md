@@ -20,7 +20,7 @@ Source Code: <https://github.com/thesadru/arkprts>
 pip install -U arkprts
 ```
 
-There may be some optional requirements, you can install them all with `all`.
+There are some optional requirements, you can install them all with `all`.
 
 ```sh
 pip install -U arkprts[all]
@@ -32,7 +32,7 @@ pip install -U arkprts[all]
 import arkprts
 
 async def main() -> None:
-    client = arkprts.Client(gamedata=False)
+    client = arkprts.Client(assets=False)
 
     # search users by nickname
     users = await client.search_players("Doctor", server="en")
@@ -45,7 +45,7 @@ async def main() -> None:
     auth = arkprts.YostarAuth("en")
     await auth.login_with_email_code("doctor@gmail.com")
     # or auth.login_with_token("123456", "abcdefg")
-    client = arkprts.Client(auth=auth, gamedata=False)
+    client = arkprts.Client(auth=auth, assets=False)
 
     # get logged-in user data
     data = await client.get_data()
@@ -62,7 +62,7 @@ operator = users[0].assist_char_list[0]  # type: arkprts.models.Character
 print(f"Assist operator {operator.static.name} is level {operator.level}")
 ```
 
-To disable downloading static data use `arkprts.Client(gamedata=False)`. To choose the data download location set `arkprts.Client(gamedata="/path/to/data")` (`/tmp`/`%TEMP%` is chosen by default).
+To disable downloading static data use `arkprts.Client(assets=False)`. To choose the data download location set `arkprts.Client(assets="/path/to/data")` (`/tmp`/`%TEMP%` is chosen by default).
 
 ArkPRTS supports en, jp, kr, cn and bili servers. However only global/yostar servers (en, jp and kr) can be used without logging in.
 
@@ -113,7 +113,7 @@ public_client = arkprts.Client()
 # ----
 auth = arkprts.YostarAuth("en", network=public_client.network)
 await auth.login_with_token("123456", "abcdefg")
-private_client = arkprts.Client(auth=auth, gamedata=public_client.gamedata)
+private_client = arkprts.Client(auth=auth, assets=public_client.assets)
 ```
 
 Programmatically getting auth tokens from a user on your website.

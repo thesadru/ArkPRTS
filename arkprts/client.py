@@ -28,8 +28,8 @@ import typing
 import warnings
 import zipfile
 
+from . import assets as assetsn
 from . import auth as authn
-from . import gamedata as gd
 from . import models
 from . import network as netn
 
@@ -44,43 +44,44 @@ class CoreClient:
 
     auth: authn.CoreAuth
     """Authentication client."""
-    gamedata: gd.GameData  # may actually be None, but that's a pain to typehint
+    assets: assetsn.Assets
     """Game data client."""
 
     def __init__(
         self,
         auth: authn.CoreAuth | None = None,
         *,
-        gamedata: gd.GameData | str | typing.Literal[False] | None = None,
+        assets: assetsn.Assets | str | typing.Literal[False] | None = None,
         network: netn.NetworkSession | None = None,
         server: netn.ArknightsServer | None = None,
-        language: netn.ArknightsLanguage | None = None,
     ) -> None:
         """Initialize a client.
 
         auth: Authentication client. May be both public and private. GuestAuth by default.
-        gamedata: Game data client or path to its location. May be disabled with False.
+        assets: Assets client or path to its location.
         network: Network session.
         server: Default server. Not recommended for large-scale usage.
-        language: Default language. Fallbacks on the gamedata's default language.
         """
         self.auth = auth or authn.GuestAuth(network=network)
-        if gamedata is False:
-            self.gamedata = None  # type: ignore
-        elif isinstance(gamedata, gd.GameData):
-            self.gamedata = gamedata
-        else:
-            self.gamedata = gd.GameData(gamedata)
-
         if network:
             self.auth.network = network
         if server:
             self.auth.network.default_server = server
-        if language:
-            if self.gamedata is None:
-                raise ValueError("No need to use language, gamedata is disabled.")
 
-            self.gamedata.language = language
+        if assets is False:
+            self.assets = assetsn.Assets.create(
+                default_server=self.auth.network.default_server,
+                network=self.auth.network,
+            )
+            self.assets.loaded = True
+        elif isinstance(assets, assetsn.Assets):
+            self.assets = assets
+        else:
+            self.assets = assetsn.Assets.create(
+                assets,
+                default_server=self.auth.network.default_server,
+                network=self.auth.network,
+            )
 
     @property
     def network(self) -> netn.NetworkSession:
@@ -92,25 +93,16 @@ class CoreClient:
         """Return the default server of the network session."""
         return self.network.default_server
 
-    @property
-    def language(self) -> netn.ArknightsLanguage | None:
-        """Return the default language of the gamedata client."""
-        return self.gamedata.language
-
     async def request(self, endpoint: str, **kwargs: typing.Any) -> typing.Any:
         """Send an authenticated request to the arknights game server."""
-        if self.gamedata and not self.gamedata.loaded:
-            await self.gamedata.update_gamedata()
+        if self.assets and not self.assets.loaded:
+            await self.update_assets()
 
         return await self.auth.auth_request(endpoint, **kwargs)
 
-    async def update_gamedata(self, allow: str | None = None, *, force: bool = False) -> bool:
-        """Download game data."""
-        if not self.gamedata:
-            return False
-
-        await self.gamedata.update_gamedata(allow=allow, force=force)
-        return True
+    async def update_assets(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        """Download excel assets."""
+        await self.assets.update_assets(*args, **kwargs)
 
     @classmethod
     async def from_token(
@@ -120,11 +112,11 @@ class CoreClient:
         server: netn.ArknightsServer = "en",
         *,
         network: netn.NetworkSession | None = None,
-        gamedata: gd.GameData | None = None,
+        assets: assetsn.Assets | None = None,
     ) -> Self:
         """Create a client from a token."""
         auth = await authn.Auth.from_token(server, channel_uid, token, network=network)
-        return cls(auth, gamedata=gamedata)
+        return cls(auth, assets=assets)
 
     async def login_with_token(self, channel_uid: str, token: str) -> None:
         """Login with username and password."""

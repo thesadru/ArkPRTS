@@ -1,7 +1,7 @@
 [project]
 name = "arkprts"
 requires-python = ">=3.9"
-version = "0.2.6"
+version = "0.3.0"
 
 [build-system]
 requires = ["setuptools"]
@@ -41,11 +41,12 @@ line-length = 130
 # EM: String literal in exception
 # ERA: Commented-out code
 # FBT: Boolean in positional function type (duck-typing)
+# PERF: Performance improvements (in python...)
 # SLF: Private member access
 # TCH: Not using TYPE_CHECKING (ugly)
-# TD: TODO comment conventions
 # ANN10: Missing type annotation for self/cls (useless)
 # ANN401: Use of typing.Any (complicates)
+# B007: Loop variable not used within loop body but outside
 # B008: Do not perform function calls in argument defaults (pydantic)
 # B027: Empty method in ABC (optional rewrite)
 # B028: No stacklevel in warnings
@@ -72,11 +73,12 @@ ignore = [
     "EM",
     "ERA",
     "FBT",
+    "PERF",
     "SLF",
     "TCH",
-    "TD",
     "ANN10",
     "ANN401",
+    "B007",
     "B008",
     "B027",
     "B028",

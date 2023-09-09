@@ -80,7 +80,7 @@ class Signature(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this character."""
-        return self.client.gamedata.char_table[self.char_id]
+        return self.client.assets.char_table[self.char_id]
 
 
 class Pos(base.BaseModel):

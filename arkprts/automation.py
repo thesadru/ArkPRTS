@@ -12,8 +12,8 @@ import time
 import typing
 import zipfile
 
+from . import assets as assetsn
 from . import auth as authn
-from . import gamedata as gd
 from . import network as netn
 from .client import CoreClient
 
@@ -72,6 +72,7 @@ def get_md5(data: str | bytes) -> str:
 
 
 def rijndael_encrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
+    """Encrypt with AES CBC."""
     from Crypto.Cipher import AES
     from Crypto.Util.Padding import pad
 
@@ -81,6 +82,7 @@ def rijndael_encrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
 
 
 def rijndael_decrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
+    """Decrypt with AES CBC."""
     from Crypto.Cipher import AES
     from Crypto.Util.Padding import unpad
 
@@ -90,12 +92,14 @@ def rijndael_decrypt(data: bytes, key: bytes, iv: bytes) -> bytes:
 
 
 def encrypt_battle_data(data: str, login_time: int) -> str:
+    """Encrypt battle data with AES."""
     iv = "".join(random.choices(string.ascii_letters + string.digits, k=16)).encode()
     key_array = bytearray.fromhex(get_md5(f"pM6Umv*^hVQuB6t&{login_time}"))
     return binascii.hexlify(rijndael_encrypt(data.encode(), key_array, iv) + iv).decode().upper()
 
 
 def decrypt_battle_data(data: str, login_time: int) -> typing.Any:
+    """Decrypt battle data with AES."""
     battle_data = data[:-32:]
     battle_data_array = bytearray.fromhex(battle_data)
     iv = data[-32::]
@@ -144,12 +148,11 @@ class AutomationClient(CoreClient):
         self,
         auth: authn.Auth | None = None,
         *,
-        gamedata: gd.GameData | None = None,
+        assets: assetsn.Assets | str | typing.Literal[False] | None = None,
         network: netn.NetworkSession | None = None,
         server: netn.ArknightsServer | None = None,
-        language: netn.ArknightsLanguage | None = None,
     ) -> None:
-        super().__init__(auth, gamedata=gamedata, network=network, server=server, language=language)
+        super().__init__(auth, assets=assets, network=network, server=server)
         self.data = {}
 
     def update_player_data_delta(
