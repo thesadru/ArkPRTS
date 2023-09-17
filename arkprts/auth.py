@@ -98,6 +98,7 @@ __all__ = [
     "CoreAuth",
     "GuestAuth",
     "HypergryphAuth",
+    "LongchengAuth",
     "MultiAuth",
     "YostarAuth",
 ]
