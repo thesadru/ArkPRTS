@@ -345,7 +345,6 @@ class YostarAuth(Auth):
     """Authentication client for global accounts."""
 
     distributor: typing.Literal["yostar"]
-    server: typing.Literal["en", "jp", "kr"]
 
     def __init__(
         self,
@@ -468,7 +467,6 @@ class HypergryphAuth(Auth):
     """Authentication client for chinese accounts."""
 
     distributor: typing.Literal["hypergryph"]
-    server: typing.Literal["cn"]
 
     def __init__(
         self,
@@ -543,7 +541,6 @@ class BilibiliAuth(Auth):
     """Authentication client for bilibili accounts."""
 
     distributor: typing.Literal["bilibili"]
-    server: typing.Literal["bili"]
 
     cipher_key: str
     """Bilibili pkcs1 openssl key for arknights."""
@@ -664,7 +661,6 @@ class LongchengAuth(Auth):
     """Authentication client for taiwan accounts."""
 
     distributor: typing.Literal["longcheng"]
-    server: typing.Literal["tw"]
 
     def __init__(
         self,

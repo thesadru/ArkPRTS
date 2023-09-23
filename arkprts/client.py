@@ -239,7 +239,17 @@ class Client(CoreClient):
     ) -> typing.Sequence[models.Player]:
         """Get players and return a model."""
         data = await self.get_raw_player_info(ids, server=server)
-        return [models.Player(client=self, **i) for i in data["result"]]
+        return [models.Player(client=self, **i) for i in data["friends"]]
+
+    async def get_partial_players(
+        self,
+        ids: typing.MutableSequence[str],
+        *,
+        server: netn.ArknightsServer | None = None,
+    ) -> typing.Sequence[models.PartialPlayer]:
+        """Get players and return a model."""
+        data = await self.get_raw_player_info(ids, server=server)
+        return [models.PartialPlayer(client=self, **i) for i in data["players"]]
 
     async def get_friends(
         self,

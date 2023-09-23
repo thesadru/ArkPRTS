@@ -9,7 +9,9 @@ async def test_update(client: arkprts.Client) -> None:
 
 async def test_bundle_assets() -> None:
     assets = arkprts.BundleAssets()
-    await assets.update_assets(server="all")
+    await assets.update_assets()
+
+    await assets.network.close()
 
 
 async def test_git_assets() -> None:
