@@ -112,7 +112,7 @@ class CoreClient:
         server: netn.ArknightsServer = "en",
         *,
         network: netn.NetworkSession | None = None,
-        assets: assetsn.Assets | None = None,
+        assets: assetsn.Assets | str | typing.Literal[False] | None = None,
     ) -> Self:
         """Create a client from a token."""
         auth = await authn.Auth.from_token(server, channel_uid, token, network=network)
