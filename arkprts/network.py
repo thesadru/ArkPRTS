@@ -39,7 +39,7 @@ __all__ = [
     "NetworkSession",
 ]
 
-logger: logging.Logger = logging.getLogger("arkprts.auth")
+LOGGER: logging.Logger = logging.getLogger("arkprts.auth")
 
 # these are in no way official slugs, just my own naming
 
@@ -186,7 +186,7 @@ class NetworkSession:
             await asyncio.wait([asyncio.create_task(self.load_network_config(server)) for server in NETWORK_ROUTES])
             return
 
-        logger.debug("Loading network configuration for %s.", server)
+        LOGGER.debug("Loading network configuration for %s.", server)
         data = await self.request(NETWORK_ROUTES[server])  # type: ignore # custom domain
         content = json.loads(data["content"])
         self.domains[server].update(content["configs"][content["funcVer"]]["network"])
@@ -198,6 +198,6 @@ class NetworkSession:
             await asyncio.wait([asyncio.create_task(self.load_version_config(server)) for server in NETWORK_ROUTES])
             return
 
-        logger.debug("Loading version configuration for %s.", server)
+        LOGGER.debug("Loading version configuration for %s.", server)
         data = await self.request("hv", server=server)
         self.versions[server].update(data)
