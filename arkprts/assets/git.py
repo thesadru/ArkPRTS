@@ -25,7 +25,7 @@ from . import base
 
 __all__ = ("GitAssets",)
 
-logger: logging.Logger = logging.getLogger("arkprts.assets.git")
+LOGGER: logging.Logger = logging.getLogger("arkprts.assets.git")
 
 GAMEDATA_REPOSITORY = "Kengxxiao/ArknightsGameData"
 TW_GAMEDATA_REPOSITORY = "aelurum/ArknightsGameData"  # zh-tw fork
@@ -98,25 +98,25 @@ async def download_repository(repository: str, destination: PathLike, allow: str
     commit_file = destination / "commit.txt"
 
     if not force and commit_file.exists() and time.time() - commit_file.stat().st_mtime < 60 * 60 * 6:
-        logger.debug("%s was updated recently, skipping download", repository)
+        LOGGER.debug("%s was updated recently, skipping download", repository)
         return
 
     try:
         commit = await get_github_repository_commit(repository)
     except aiohttp.ClientResponseError:
-        logger.warning("Failed to get %s commit, skipping download", repository, exc_info=True)
+        LOGGER.warning("Failed to get %s commit, skipping download", repository, exc_info=True)
         return
 
     if not force and commit_file.exists() and commit_file.read_text() == commit:
-        logger.debug("%s is up to date [%s]", repository, commit)
+        LOGGER.debug("%s is up to date [%s]", repository, commit)
         return
 
-    logger.info("Downloading %s to %s [%s]", repository, str(destination), commit)
+    LOGGER.info("Downloading %s to %s [%s]", repository, str(destination), commit)
     tarball_path = await download_github_tarball(repository, destination / f"{repository.split('/')[-1]}.tar.gz")
 
-    logger.debug("Decompressing %s", repository)
+    LOGGER.debug("Decompressing %s", repository)
     tarball_commit = decompress_tarball(tarball_path, destination, allow=allow)
-    logger.debug("Decompressed %s %s", repository, tarball_commit)
+    LOGGER.debug("Decompressed %s %s", repository, tarball_commit)
     if tarball_commit not in commit:
         raise RuntimeError(f"Tarball commit {tarball_commit} does not match github commit {commit}")
 
@@ -124,7 +124,7 @@ async def download_repository(repository: str, destination: PathLike, allow: str
     commit_file.write_text(commit)
     os.utime(commit_file, (time.time(), time.time()))
 
-    logger.info("Downloaded %s", repository)
+    LOGGER.info("Downloaded %s", repository)
 
 
 async def update_git_repository(repository: str, directory: PathLike) -> None:
@@ -132,7 +132,7 @@ async def update_git_repository(repository: str, directory: PathLike) -> None:
     directory = pathlib.Path(directory)
 
     if not (directory / ".git").exists():
-        logger.info("Initializing repository in %s", directory)
+        LOGGER.info("Initializing repository in %s", directory)
         directory.parent.mkdir(parents=True, exist_ok=True)
         proc = await asyncio.create_subprocess_exec(
             "git",
@@ -143,7 +143,7 @@ async def update_git_repository(repository: str, directory: PathLike) -> None:
         )
         await proc.wait()
     else:
-        logger.info("Updating %s in %s", repository, directory)
+        LOGGER.info("Updating %s in %s", repository, directory)
         proc = await asyncio.create_subprocess_exec("git", "pull", cwd=directory)
         await proc.wait()
 

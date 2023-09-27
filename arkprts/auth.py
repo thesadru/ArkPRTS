@@ -103,7 +103,7 @@ __all__ = [
     "YostarAuth",
 ]
 
-logger: logging.Logger = logging.getLogger("arkprts.auth")
+LOGGER: logging.Logger = logging.getLogger("arkprts.auth")
 
 RawAuthMapping = typing.TypedDict("RawAuthMapping", {"server": netn.ArknightsServer, "channel_uid": str, "token": str})
 
@@ -243,7 +243,7 @@ class Auth(abc.ABC, CoreAuth):
             raise errors.NotLoggedInError("Not logged in.")
 
         async with self.session as headers:
-            logger.debug("[UID: %s] Sending request #%s to %s.", self.uid, headers["seqnum"], endpoint)
+            LOGGER.debug("[UID: %s] Sending request #%s to %s.", self.uid, headers["seqnum"], endpoint)
             return await self.request("gs", endpoint, headers=headers, server=self.server, **kwargs)
 
     async def _get_u8_token(
@@ -252,7 +252,7 @@ class Auth(abc.ABC, CoreAuth):
         access_token: str,
     ) -> tuple[str, str]:
         """Get an arknights uid and u8 token from a channel uid and access token."""
-        logger.debug("Getting u8 token for %s.", channel_uid)
+        LOGGER.debug("Getting u8 token for %s.", channel_uid)
         channel_id = {"cn": "1", "bili": "2", "en": "3", "jp": "3", "kr": "3"}[self.server]
         if channel_id == "3":
             extension = {"uid": channel_uid, "token": access_token}
@@ -285,7 +285,7 @@ class Auth(abc.ABC, CoreAuth):
         u8_token: str,
     ) -> str:
         """Get a secret from an arknights uid and a u8 token."""
-        logger.debug("Getting session secret for %s.", uid)
+        LOGGER.debug("Getting session secret for %s.", uid)
         if not self.network.versions.get(self.server):
             await self.network.load_version_config(self.server)
 
@@ -310,7 +310,7 @@ class Auth(abc.ABC, CoreAuth):
         data = await self.request("gs", "account/login", json=body, headers=headers)
         secret = data["secret"]
         self.session.secret = secret
-        logger.info("Logged in with UID %s", uid)
+        LOGGER.info("Logged in with UID %s", uid)
         return secret
 
     @classmethod
@@ -371,7 +371,7 @@ class YostarAuth(Auth):
 
     async def _request_yostar_auth(self, email: str) -> None:
         """Request to log in with a yostar account."""
-        logger.debug("Sending code to %s.", email)
+        LOGGER.debug("Sending code to %s.", email)
         body = {"platform": "android", "account": email, "authlang": "en"}
         await self.request_passport("account/yostar_auth_request", json=body)
 
@@ -399,12 +399,12 @@ class YostarAuth(Auth):
             "deviceId": self.device_ids[0],
         }
         data = await self.request_passport("user/create", json=body)
-        logger.debug("Created guest account %s", data["uid"])
+        LOGGER.debug("Created guest account %s", data["uid"])
         return data["uid"], data["token"]
 
     async def _bind_nickname(self, nickname: str) -> None:
         """Bind a nickname. Required for new accounts."""
-        logger.debug("Binding nickname of %s to %r.", self.uid, nickname)
+        LOGGER.debug("Binding nickname of %s to %r.", self.uid, nickname)
         await self.auth_request("user/bindNickName", json={"nickName": nickname})
 
     async def login_with_token(self, channel_uid: str, yostar_token: str) -> None:
@@ -746,10 +746,10 @@ class MultiAuth(CoreAuth):
         if session is None:
             session = await self._create_new_session(server)
             self.sessions.append(session)
-            logger.debug("Created new session %s for server %s.", session.uid, server)
+            LOGGER.debug("Created new session %s for server %s.", session.uid, server)
 
         async with session as headers:
-            logger.debug(
+            LOGGER.debug(
                 "[GUEST UID: %s %s] Sending request #%s to %s.",
                 session.uid,
                 server,
@@ -841,7 +841,7 @@ class GuestAuth(MultiAuth):
         else:
             return None
 
-        logging.debug("Loading cached auth %s for %s.", auth["channel_uid"], auth["server"])
+        LOGGER.debug("Loading cached auth %s for %s.", auth["channel_uid"], auth["server"])
         try:
             auth = await Auth.from_token(server, auth["channel_uid"], auth["token"], network=self.network)
         except errors.BaseArkprtsError as e:
