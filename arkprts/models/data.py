@@ -92,7 +92,7 @@ class Status(base.BaseModel):
     """ID of the secretary operator's skin."""
     global_voice_lan: typing.Optional[str] = pydantic.Field(None, alias="globalVoiceLan")
     """Default voice-over language."""
-    avatar: Avatar
+    avatar: typing.Optional[Avatar] = pydantic.Field(None)
     """Selected avatar."""
 
     # fmt: off
@@ -271,7 +271,7 @@ class Skins(base.BaseModel):
 
     character_skins: typing.Mapping[str, bool] = pydantic.Field(alias="characterSkins")
     """Owned skins."""
-    skin_ts: typing.Mapping[str, base.ArknightsTimestamp] = pydantic.Field(alias="skinTs")
+    skin_ts: typing.Mapping[str, base.ArknightsTimestamp] = pydantic.Field({}, alias="skinTs")
     """When the skins were obtained."""
 
 
