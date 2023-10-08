@@ -584,3 +584,25 @@ class AutomationClient(CoreClient):
             "data": data,
         }
         return await self.request(f"{battle_type}/battleFinish", json=d)
+
+    async def battle_sweep(
+        self,
+        battle_type: str,
+        stage_id: str,
+        item_id: str,
+        inst_id: int,
+    ) -> typing.Any:
+        """Use a proxy to instantly do a battle.
+
+        battle_type: Type of stage being done. Likely CampaignV2 (annihilation).
+        stage_id: Stage ID.
+        item_id: Item used to instantly do the battle. EXTERMINATION_AGENT.
+        inst_id: Item instance ID. Ideally the one that expires earlier.
+        """
+        data = {
+            "stageId": stage_id,
+            "itemId": item_id,
+            "itemInstId": inst_id,
+        }
+
+        return await self.request(f"{battle_type}/battleSweep", json=data)
