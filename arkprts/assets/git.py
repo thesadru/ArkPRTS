@@ -27,10 +27,11 @@ __all__ = ("GitAssets",)
 
 LOGGER: logging.Logger = logging.getLogger("arkprts.assets.git")
 
-GAMEDATA_REPOSITORY = "Kengxxiao/ArknightsGameData"
-TW_GAMEDATA_REPOSITORY = "aelurum/ArknightsGameData"  # zh-tw fork
-RESOURCES_REPOSITORY = "Aceship/Arknight-Images"
-ALT_RESOURCES_REPOSITORY = "yuanyan3060/ArknightsGameResource"  # contains zh-cn files
+CN_GAMEDATA_REPOSITORY = "Kengxxiao/ArknightsGameData"  # master
+GLOBAL_GAMEDATA_REPOSITORY = "Kengxxiao/ArknightsGameData_YoStar"  # main
+TW_GAMEDATA_REPOSITORY = "aelurum/ArknightsGameData"  # zh-tw fork  # master_v2
+RESOURCES_REPOSITORY = "Aceship/Arknight-Images"  # main
+ALT_RESOURCES_REPOSITORY = "yuanyan3060/ArknightsGameResource"  # contains zh-cn files  # main
 
 GAMEDATA_LANGUAGE: typing.Mapping[netn.ArknightsServer, str] = {
     "en": "en_US",
@@ -44,27 +45,36 @@ GAMEDATA_LANGUAGE: typing.Mapping[netn.ArknightsServer, str] = {
 PathLike = typing.Union[pathlib.Path, str]
 
 
-async def download_github_file(repository: str, path: str) -> bytes:
+async def download_github_file(repository: str, path: str, *, branch: str = "HEAD") -> bytes:
     """Download a file from github."""
-    url = f"https://raw.githubusercontent.com/{repository}/HEAD/{path}"
+    url = f"https://raw.githubusercontent.com/{repository}/{branch}/{path}"
     async with aiohttp.request("GET", url) as response:
         response.raise_for_status()
         return await response.read()
 
 
-async def get_github_repository_commit(repository: str) -> str:
+async def get_github_repository_commit(repository: str, *, branch: str = "HEAD") -> str:
     """Get the commit hash of a github repository."""
-    url = f"https://api.github.com/repos/{repository}/commits/HEAD"
+    url = f"https://api.github.com/repos/{repository}/commits/{branch}"
     async with aiohttp.request("GET", url) as response:
         response.raise_for_status()
         data = await response.json()
         return data["sha"]
 
 
-async def download_github_tarball(repository: str, destination: PathLike | None) -> pathlib.Path:
+async def download_github_tarball(
+    repository: str,
+    destination: PathLike | None,
+    *,
+    branch: str = "HEAD",
+) -> pathlib.Path:
     """Download a tarball from github."""
     destination = pathlib.Path(destination or tempfile.mktemp(f"{repository.split('/')[-1]}.tar.gz"))
-    url = f"https://api.github.com/repos/{repository}/tarball"
+    if branch == "HEAD":
+        url = f"https://api.github.com/repos/{repository}/tarball"
+    else:
+        url = f"https://github.com/{repository}/archive/refs/heads/{branch}.tar.gz"
+
     async with aiohttp.ClientSession(auto_decompress=False) as session, session.get(url) as response:
         response.raise_for_status()
         with destination.open("wb") as file:
@@ -92,7 +102,14 @@ def decompress_tarball(path: PathLike, destination: PathLike, *, allow: str = "*
     return top_directory
 
 
-async def download_repository(repository: str, destination: PathLike, allow: str = "*", *, force: bool = False) -> None:
+async def download_repository(
+    repository: str,
+    destination: PathLike,
+    allow: str = "*",
+    *,
+    branch: str = "HEAD",
+    force: bool = False,
+) -> None:
     """Download a repository from github."""
     destination = pathlib.Path(destination)
     commit_file = destination / "commit.txt"
@@ -102,7 +119,7 @@ async def download_repository(repository: str, destination: PathLike, allow: str
         return
 
     try:
-        commit = await get_github_repository_commit(repository)
+        commit = await get_github_repository_commit(repository, branch=branch)
     except aiohttp.ClientResponseError:
         LOGGER.warning("Failed to get %s commit, skipping download", repository, exc_info=True)
         return
@@ -112,7 +129,11 @@ async def download_repository(repository: str, destination: PathLike, allow: str
         return
 
     LOGGER.info("Downloading %s to %s [%s]", repository, str(destination), commit)
-    tarball_path = await download_github_tarball(repository, destination / f"{repository.split('/')[-1]}.tar.gz")
+    tarball_path = await download_github_tarball(
+        repository,
+        destination / f"{repository.split('/')[-1]}.tar.gz",
+        branch=branch,
+    )
 
     LOGGER.debug("Decompressing %s", repository)
     tarball_commit = decompress_tarball(tarball_path, destination, allow=allow)
@@ -127,7 +148,7 @@ async def download_repository(repository: str, destination: PathLike, allow: str
     LOGGER.info("Downloaded %s", repository)
 
 
-async def update_git_repository(repository: str, directory: PathLike) -> None:
+async def update_git_repository(repository: str, directory: PathLike, *, branch: str = "HEAD") -> None:
     """Update game data."""
     directory = pathlib.Path(directory)
 
@@ -138,6 +159,7 @@ async def update_git_repository(repository: str, directory: PathLike) -> None:
             "git",
             "clone",
             "--depth=1",
+            *([] if branch == "HEAD" else ["--branch", branch]),
             f"https://github.com/{repository}.git",
             cwd=directory.parent,
         )
@@ -159,12 +181,19 @@ async def _check_git_installed_async() -> bool:
     return (await proc.wait()) == 0
 
 
-async def update_repository(repository: str, directory: PathLike, *, allow: str = "*", force: bool = False) -> None:
+async def update_repository(
+    repository: str,
+    directory: PathLike,
+    *,
+    allow: str = "*",
+    branch: str = "HEAD",
+    force: bool = False,
+) -> None:
     """Update a repository even if git is not installed."""
     if await _check_git_installed_async():
-        await update_git_repository(repository, directory)
+        await update_git_repository(repository, directory, branch=branch)
     else:
-        await download_repository(repository, directory, allow=allow, force=force)
+        await download_repository(repository, directory, allow=allow, branch=branch, force=force)
 
 
 class GitAssets(base.Assets):
@@ -188,12 +217,23 @@ class GitAssets(base.Assets):
 
         default_directory = pathlib.Path(tempfile.gettempdir())
 
-        self.gamedata_directory = pathlib.Path(gamedata_directory or default_directory / "ArknightsGameData")
-        self.resources_directory = pathlib.Path(resources_directory or default_directory / "ArknightsGameResource")
-        self.gamedata_repository = gamedata_repository or (
-            TW_GAMEDATA_REPOSITORY if self.default_server == "tw" else GAMEDATA_REPOSITORY
-        )
+        if gamedata_repository:
+            self.gamedata_repository = gamedata_repository
+        elif self.default_server == "cn":
+            self.gamedata_repository = CN_GAMEDATA_REPOSITORY
+        elif self.default_server == "tw":
+            self.gamedata_repository = TW_GAMEDATA_REPOSITORY
+        else:
+            self.gamedata_repository = GLOBAL_GAMEDATA_REPOSITORY
+
         self.resources_repository = resources_repository or RESOURCES_REPOSITORY
+
+        self.gamedata_directory = pathlib.Path(
+            gamedata_directory or default_directory / self.gamedata_repository.split("/")[1],
+        )
+        self.resources_directory = pathlib.Path(
+            resources_directory or default_directory / self.resources_repository.split("/")[1],
+        )
 
     async def update_assets(
         self,

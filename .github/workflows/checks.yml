@@ -36,6 +36,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: install flatbuffers
+      run: sudo apt-get install -y flatbuffers-compiler
+
     - name: install nox
       run: python -m pip install nox
 
