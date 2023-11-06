@@ -86,7 +86,6 @@ def run_flatbuffers(
     output_directory: PathLike,
 ) -> pathlib.Path:
     """Run the flatbuffers cli. Returns the output filename."""
-    stderr = io.StringIO()
     code = subprocess.call(
         [  # noqa: S603  # check for execution of untrusted input
             "flatc",
@@ -105,10 +104,9 @@ def run_flatbuffers(
             # "--no-warnings",
             "--force-empty",
         ],
-        stderr=stderr,
+        stderr=subprocess.DEVNULL,
     )
     if code != 0:
-        LOGGER.error(stderr.read())
         raise ValueError(f"flatc failed with code {code}")
 
     return pathlib.Path(output_directory) / (pathlib.Path(fbs_path).stem + ".json")
