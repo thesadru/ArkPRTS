@@ -30,10 +30,21 @@ class Assets(abc.ABC):
     """Default server."""
     loaded: bool
     """Whether the data was loaded at any point during the code execution."""
+    excel_cache: dict[netn.ArknightsServer, dict[str, typing.Any]]
+    """Cache of loaded excel files."""
+    json_loads: typing.Callable[[bytes], typing.Any]
+    """Alternative self.json_load"""
 
-    def __init__(self, *, default_server: netn.ArknightsServer = "en") -> None:
+    def __init__(
+        self,
+        *,
+        default_server: netn.ArknightsServer = "en",
+        json_loads: typing.Callable[[bytes], typing.Any] = json.loads,
+    ) -> None:
         self.default_server = default_server
         self.loaded = False
+        self.excel_cache = {}
+        self.json_loads = json_loads
 
     @classmethod
     def create(
@@ -73,13 +84,25 @@ class Assets(abc.ABC):
 
     def get_excel(self, name: str, *, server: netn.ArknightsServer | None = None) -> models.DDict:
         """Get a gamedata table file."""
-        data = self.get_file(f"gamedata/excel/{name}.json", server=server)
-        return models.DDict(json.loads(data))
+        path = f"gamedata/excel/{name}.json"
+        if data := self.excel_cache.setdefault(server or self.default_server, {}).get(path):
+            return models.DDict(data)
+
+        data = self.json_loads(self.get_file(path, server=server))
+        self.excel_cache[server or self.default_server][path] = data
+
+        return models.DDict(data)
 
     async def aget_excel(self, name: str, *, server: netn.ArknightsServer | None = None) -> models.DDict:
         """Get a gamedata table file without requiring load."""
-        data = await self.aget_file(f"gamedata/excel/{name}.json", server=server)
-        return models.DDict(json.loads(data))
+        path = f"gamedata/excel/{name}.json"
+        if data := self.excel_cache.setdefault(server or self.default_server, {}).get(path):
+            return models.DDict(data)
+
+        data = self.json_loads(await self.aget_file(path, server=server))
+        self.excel_cache[server or self.default_server][path] = data
+
+        return models.DDict(data)
 
     def __getitem__(self, name: str) -> models.DDict:
         """Get a gamedata table file."""
@@ -106,12 +129,17 @@ class Assets(abc.ABC):
     def get_medal(self, id: str, *, server: netn.ArknightsServer | None = None) -> models.DDict:
         """Get a medal."""
         data = self.get_excel("medal_table", server=server)
-        return data["medalList"][id]
+        return next(m for m in data["medalList"] if m["medalId"] == id)
 
     def get_medal_group(self, id: str, *, server: netn.ArknightsServer | None = None) -> models.DDict:
         """Get a medal group. Way too specific probably."""
         data = self.get_excel("medal_table", server=server)
-        return next(i for i in data["medalTypeData"]["activityMedal"]["groupData"] if i["groupId"] == id)
+        return next(
+            medal_group
+            for groups in data["medalTypeData"].values()
+            for medal_group in groups["groupData"]
+            if medal_group["groupId"] == id
+        )
 
     def get_skill(self, id: str, *, server: netn.ArknightsServer | None = None) -> models.DDict:
         """Get a skill."""

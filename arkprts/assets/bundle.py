@@ -104,6 +104,7 @@ def run_flatbuffers(
             # "--no-warnings",
             "--force-empty",
         ],
+        stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
     if code != 0:
@@ -314,8 +315,9 @@ class BundleAssets(base.Assets):
         *,
         default_server: netn.ArknightsServer | None = None,
         network: netn.NetworkSession | None = None,
+        json_loads: typing.Callable[[bytes], typing.Any] = json.loads,
     ) -> None:
-        super().__init__(default_server=default_server or "en")
+        super().__init__(default_server=default_server or "en", json_loads=json_loads)
 
         temporary_directory = pathlib.Path(tempfile.gettempdir())
         self.directory = pathlib.Path(directory or temporary_directory / "ArknightsResources")

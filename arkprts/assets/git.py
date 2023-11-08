@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import fnmatch
+import json
 import logging
 import os
 import os.path
@@ -212,8 +213,9 @@ class GitAssets(base.Assets):
         resources_repository: str | None = None,
         *,
         default_server: netn.ArknightsServer = "en",
+        json_loads: typing.Callable[[bytes], typing.Any] = json.loads,
     ) -> None:
-        super().__init__(default_server=default_server)
+        super().__init__(default_server=default_server, json_loads=json_loads)
 
         default_directory = pathlib.Path(tempfile.gettempdir())
 
