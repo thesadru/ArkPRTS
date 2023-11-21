@@ -2,6 +2,13 @@
 name = "arkprts"
 requires-python = ">=3.9"
 version = "0.3.5"
+dynamic = [
+    "dependencies",
+    "description",
+    "license",
+    "optional-dependencies",
+    "readme",
+]
 
 [build-system]
 requires = ["setuptools"]
