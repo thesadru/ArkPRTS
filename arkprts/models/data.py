@@ -92,7 +92,7 @@ class Status(base.BaseModel):
     """ID of the secretary operator's skin."""
     global_voice_lan: typing.Optional[str] = pydantic.Field(None, alias="globalVoiceLan")
     """Default voice-over language."""
-    avatar: Avatar
+    avatar: typing.Optional[Avatar] = pydantic.Field(None)
     """Selected avatar."""
 
     # fmt: off
@@ -261,7 +261,7 @@ class Troops(base.BaseModel):
     char_group: typing.Mapping[str, CharGroup] = pydantic.Field(alias="charGroup")
     """Additional operator data."""
     char_mission: typing.Mapping[str, typing.Mapping[str, int]] = pydantic.Field(alias="charMission", repr=False)
-    """IDK. Special operation missions.."""
+    """IDK. Special operation missions."""
     addon: base.DDict = pydantic.Field(default_factory=base.DDict, repr=False)
     """IDK. Unlockable character story and stage."""
 
@@ -271,7 +271,7 @@ class Skins(base.BaseModel):
 
     character_skins: typing.Mapping[str, bool] = pydantic.Field(alias="characterSkins")
     """Owned skins."""
-    skin_ts: typing.Mapping[str, base.ArknightsTimestamp] = pydantic.Field(alias="skinTs")
+    skin_ts: typing.Mapping[str, base.ArknightsTimestamp] = pydantic.Field(default={}, alias="skinTs")
     """When the skins were obtained."""
 
 

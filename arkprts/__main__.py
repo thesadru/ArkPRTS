@@ -63,6 +63,8 @@ async def main() -> None:
 
         print("\n")
 
+    await client.network.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
