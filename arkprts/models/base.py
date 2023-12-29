@@ -67,7 +67,7 @@ class BaseModel(pydantic.BaseModel, arbitrary_types_allowed=True):
         if value and value.get("tmpl"):
             # tmplId present in battle replays
             current_tmpl = value["currentTmpl"] if "currentTmpl" in value else value["tmplId"]
-            current = value["tmpl"][current_tmpl]
+            current = value["tmpl"].get(current_tmpl, next(iter(value["tmpl"].values())))
             value.update(current)
 
         return value
