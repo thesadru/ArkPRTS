@@ -398,6 +398,7 @@ class BundleAssets(base.Assets):
         *,
         server: netn.ArknightsServer | typing.Literal["all"] | None = None,
         force: bool = False,
+        normalize: bool = False,
     ) -> None:
         """Update game data.
 
@@ -426,7 +427,7 @@ class BundleAssets(base.Assets):
         # first download all .ab files in a temporary directory then start extracting them.
         for name in requested_names:
             try:
-                async for path, _ in self._download_and_save(name, server=server):
+                async for path, _ in self._download_and_save(name, server=server, normalize=normalize):
                     LOGGER.debug("Downloaded asset %s from %s for server %s", path, name, server)
             except Exception as e:
                 LOGGER.exception("Failed to download asset %s for server %s", name, server, exc_info=e)
