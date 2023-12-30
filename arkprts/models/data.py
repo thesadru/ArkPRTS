@@ -24,7 +24,7 @@ class Status(base.BaseModel):
 
     nickname: str = pydantic.Field(alias="nickName")
     """Player nickname."""
-    nick_number: str = pydantic.Field(alias="nickNumber")
+    nick_number: typing.Annotated[str, pydantic.PlainValidator(str)] = pydantic.Field(alias="nickNumber")
     """Player nickname number after #."""
     level: int
     """Player level."""
