@@ -10,7 +10,7 @@ parser.add_argument("output", type=str, nargs="?", default=None, help="Output di
 parser.add_argument("--allow", type=str, default="gamedata/excel/*", help="Files allowed to be downloaded.")
 parser.add_argument("--force", action="store_true", default=False, help="Force new files to be downloaded")
 parser.add_argument("--log-level", type=str, default="INFO", help="Logging level")
-parser.add_argument("--server", type=str, default="en", help="Server to use, global only")
+parser.add_argument("--server", type=str, default="en", help="Server to use, can be 'all'")
 parser.add_argument("--normalize", action="store_true", help="Reformat files into a normalized expanded format")
 
 
