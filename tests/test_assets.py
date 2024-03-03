@@ -1,4 +1,5 @@
 """Test game assets."""
+
 import arkprts
 
 

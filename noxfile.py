@@ -1,4 +1,5 @@
 """Nox file."""
+
 from __future__ import annotations
 
 import logging
@@ -75,7 +76,7 @@ def reformat(session: nox.Session) -> None:
     """Reformat this project's modules to fit the standard style."""
     install_requirements(session, "reformat")
     session.run("python", "-m", "black", *GENERAL_TARGETS, *verbose_args())
-    session.run("python", "-m", "ruff", "--fix-only", "--fixable", "ALL", *GENERAL_TARGETS, *verbose_args())
+    session.run("python", "-m", "ruff", "check", "--fix-only", "--fixable", "ALL", *GENERAL_TARGETS, *verbose_args())
 
     session.log("sort-all")
     LOGGER.disabled = True

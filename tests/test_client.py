@@ -1,4 +1,5 @@
 """Test arkprts client."""
+
 import typing
 
 import arkprts

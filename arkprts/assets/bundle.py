@@ -3,6 +3,7 @@
 Downloads assets directly from arknights servers.
 Unfortunately assets are stored as unity files, so they need to be extracted.
 """
+
 from __future__ import annotations
 
 import asyncio

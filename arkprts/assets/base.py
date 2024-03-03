@@ -3,6 +3,7 @@
 Getting assets either requires a unity bundle extractor or a 3rd party git repository.
 Image assets are often universal. Game data akways needs to be downloaded for each language.
 """
+
 from __future__ import annotations
 
 import abc

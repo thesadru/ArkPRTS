@@ -1,4 +1,5 @@
 """Test authentication."""
+
 import asyncio
 import collections
 import os

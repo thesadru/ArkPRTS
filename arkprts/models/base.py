@@ -1,4 +1,5 @@
 """Modified pydantic base model."""
+
 from __future__ import annotations
 
 import collections

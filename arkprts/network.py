@@ -21,6 +21,7 @@ The client and asset version must be sent along with a channel uid and access to
 | pkgAd  | https://play.google.com/store/apps/details?id=com.YoStarEN.Arknights            | Google play store apk               |
 | pkgIOS | https://apps.apple.com/us/app/id1464872022?mt=8                                 | IOS store apk                       |
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -39,7 +40,7 @@ __all__ = [
     "NetworkSession",
 ]
 
-LOGGER: logging.Logger = logging.getLogger("arkprts.auth")
+LOGGER: logging.Logger = logging.getLogger("arkprts.network")
 
 # these are in no way official slugs, just my own naming
 

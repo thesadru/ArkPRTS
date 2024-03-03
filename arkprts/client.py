@@ -19,6 +19,7 @@ User(...)
 >>> client = arkprts.AutomationClient(auth=auth)
 >>> await client.account_sync_data()
 """
+
 from __future__ import annotations
 
 import base64

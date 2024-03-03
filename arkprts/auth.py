@@ -66,11 +66,13 @@ The wrapper can represent a single or multiple sessions per client.
 Single sessions are for getting personal data, but disallow concurrent requests.
 Multiple sessions are for getting public data and allow concurrent requests.
 """
+
 from __future__ import annotations
 
 import abc
 import asyncio
 import base64
+import contextlib
 import dataclasses
 import hashlib
 import hmac
@@ -848,7 +850,8 @@ class GuestAuth(MultiAuth):
             warnings.warn(f"Failed to load cached auth: {e}")
             # remove faulty auth from cache file
             data = list(self._load_cache())
-            data.remove(auth)
+            with contextlib.suppress(ValueError):
+                data.remove(auth)
             self._save_cache(data)
 
             return None

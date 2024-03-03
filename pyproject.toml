@@ -1,7 +1,7 @@
 [project]
 name = "arkprts"
 requires-python = ">=3.9"
-version = "0.3.5"
+version = "0.3.6"
 dynamic = [
     "dependencies",
     "description",
@@ -41,9 +41,10 @@ sort = "cover"
 
 [tool.ruff]
 target-version = "py38"
-select = ["ALL"]
 # 120 from black and then a bit
 line-length = 130
+[tool.ruff.lint]
+select = ["ALL"]
 # A: Shadowing built-in
 # ARG: Unused function argument (duck-typing)
 # EM: String literal in exception
@@ -113,7 +114,7 @@ ignore = [
 # B007: Unused loop variable
 unfixable = ["F401", "F841", "B007"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # F40: import (unused imports)
 "**/__init__.py" = ["F40"]
 # T201: use of print
@@ -126,8 +127,8 @@ unfixable = ["F401", "F841", "B007"]
 "docs/conf.py" = ["INP001"]
 "dev-requirements/setup.py" = ["INP001"]
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 15
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"

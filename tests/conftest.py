@@ -1,4 +1,5 @@
 """Pytest configuration."""
+
 import asyncio
 import typing
 import warnings

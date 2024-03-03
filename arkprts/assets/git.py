@@ -3,6 +3,7 @@
 Has to use two separate repositories,
 a game data repository with all languages and an image resource repository with only one language.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -78,7 +79,7 @@ async def download_github_tarball(
 
     async with aiohttp.ClientSession(auto_decompress=False) as session, session.get(url) as response:
         response.raise_for_status()
-        with destination.open("wb") as file:
+        with destination.open("wb") as file:  # noqa: ASYNC101  # would need another dependency
             async for chunk in response.content.iter_any():
                 file.write(chunk)
 
@@ -98,7 +99,7 @@ def decompress_tarball(path: PathLike, destination: PathLike, *, allow: str = "*
             member.name = member.name[len(top_directory + "/") :]
             members.append(member)
 
-        tar.extractall(destination, members=members)
+        tar.extractall(destination, members=members)  # noqa: S202 # type: ignore
 
     return top_directory
 
