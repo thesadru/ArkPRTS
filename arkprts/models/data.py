@@ -283,7 +283,7 @@ class AssistChar(base.BaseModel):
     """Index of the operator."""
     skill_index: int = pydantic.Field(alias="skillIndex")
     """Index of the selected skill."""
-    current_equip: typing.Optional[str] = pydantic.Field(alias="currentEquip")
+    current_equip: typing.Optional[str] = pydantic.Field(default=None, alias="currentEquip")
     """Currently equipped module."""
     tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
     """Alternative operator class data. Only for Amiya."""
