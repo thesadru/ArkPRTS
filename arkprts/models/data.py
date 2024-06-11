@@ -283,7 +283,7 @@ class AssistChar(base.BaseModel):
     """Index of the operator."""
     skill_index: int = pydantic.Field(alias="skillIndex")
     """Index of the selected skill."""
-    current_equip: typing.Optional[str] = pydantic.Field(alias="currentEquip")
+    current_equip: typing.Optional[str] = pydantic.Field(default=None, alias="currentEquip")
     """Currently equipped module."""
     tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
     """Alternative operator class data. Only for Amiya."""
@@ -296,8 +296,10 @@ class Social(base.BaseModel):
     """Support operators."""
     yesterday_reward: base.DDict = pydantic.Field(alias="yesterdayReward")
     """IDK. Clue exchange data."""
-    y_crisis_ss: typing.Union[str, typing.Any] = pydantic.Field(alias="yCrisisSs", repr=False)
+    y_crisis_ss: str = pydantic.Field(alias="yCrisisSs", repr=False)
     """IDK. Crisis refers to contingency contract. Always empty string."""
+    y_crisis_v2_ss: str = pydantic.Field(alias="yCrisisV2Ss", repr=False)
+    """IDK. Crisis refers to contingency contract. Empty string when cc is not happening."""
     medal_board: base.DDict = pydantic.Field(default_factory=base.DDict, alias="medalBoard")
     """Medal board."""
 

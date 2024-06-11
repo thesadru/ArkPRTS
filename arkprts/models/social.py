@@ -72,7 +72,9 @@ class AssistChar(base.BaseModel):
     level: int
     """Operator level."""
     crisis_record: typing.Mapping[str, int] = pydantic.Field(alias="crisisRecord")
-    """Maximum risk this operator was used as a support in. -1 if never used."""
+    """Maximum risk this operator was used as a support in. Only for operations (before Pinch-Out). -1 if never used."""
+    crisis_v2_record: typing.Mapping[str, int] = pydantic.Field(alias="crisisV2Record")
+    """Maximum risk this operator was used as a support in. Only for battleplans (after Pinch-Out). -1 if never used."""
     current_equip: typing.Optional[str] = pydantic.Field(alias="currentEquip")
     """ID of the currently equipped module."""
     equip: typing.Mapping[str, UniEquip]
