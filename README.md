@@ -122,7 +122,7 @@ Programmatically getting auth tokens from a user on your website.
 @route("/code")
 def code(request):
     auth = arkprts.YostarAuth(request.query["server"], network=...)
-    await auth.get_token_from_email_code(request.query["email"])
+    await auth.send_email_code(request.query["email"])
 
     return "Code sent!"
 

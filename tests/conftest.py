@@ -12,7 +12,10 @@ def event_loop() -> typing.Iterator[asyncio.AbstractEventLoop]:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
 
-        loop = asyncio.get_event_loop()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
 
     yield loop
     loop.close()

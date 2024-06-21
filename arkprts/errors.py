@@ -28,12 +28,13 @@ class ArkPrtsError(BaseArkprtsError):
 
     def __init__(self, data: typing.Mapping[str, typing.Any]) -> None:
         self.data = data
-        super().__init__(f"[{data['result']}] {self.message} {data}")
+        super().__init__(f"[{data.get('result')}] {self.message} {data}")
 
 
 class GameServerError(BaseArkprtsError):
     """Game server error."""
 
+    data: typing.Mapping[str, typing.Any]
     status_code: int
     error: str
     code: int
@@ -41,6 +42,7 @@ class GameServerError(BaseArkprtsError):
     info: typing.Mapping[str, typing.Any]
 
     def __init__(self, data: typing.Mapping[str, typing.Any]) -> None:
+        self.data = data
         self.status_code = data.get("statusCode", 400)
         self.error = data["error"]
         self.code = data.get("code", 0)

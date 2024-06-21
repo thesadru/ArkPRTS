@@ -126,8 +126,8 @@ def generate_u8_sign(data: typing.Mapping[str, object]) -> str:
     """u8 auth sign."""
     query = urllib.parse.urlencode(sorted(data.items()))
 
-    hama_code = hmac.new(b"91240f70c09a08a6bc72af1a5c8d4670", query.encode(), "sha1")
-    return hama_code.hexdigest().lower()
+    code = hmac.new(b"91240f70c09a08a6bc72af1a5c8d4670", query.encode(), "sha1")
+    return code.hexdigest().lower()
 
 
 @dataclasses.dataclass()
@@ -315,6 +315,10 @@ class Auth(abc.ABC, CoreAuth):
         LOGGER.info("Logged in with UID %s", uid)
         return secret
 
+    @abc.abstractmethod
+    async def login_with_token(self, channel_uid: str, token: str, /) -> None:
+        """Login with a channel uid and token."""
+
     @classmethod
     async def from_token(
         cls,
@@ -371,7 +375,7 @@ class YostarAuth(Auth):
         data = await self.request_passport("user/login", json=body)
         return data["accessToken"]
 
-    async def _request_yostar_auth(self, email: str) -> None:
+    async def send_email_code(self, email: str) -> None:
         """Request to log in with a yostar account."""
         LOGGER.debug("Sending code to %s.", email)
         body = {"platform": "android", "account": email, "authlang": "en"}
@@ -430,7 +434,7 @@ class YostarAuth(Auth):
             email = input("Enter email:")
 
         if not code:
-            await self._request_yostar_auth(email)
+            await self.send_email_code(email)
             if not stdin:
                 return "", ""
 

@@ -16,6 +16,7 @@ import logging
 import os
 import pathlib
 import re
+import shlex
 import subprocess
 import tempfile
 import typing
@@ -98,29 +99,29 @@ def run_flatbuffers(
     output_directory: PathLike,
 ) -> pathlib.Path:
     """Run the flatbuffers cli. Returns the output filename."""
-    code = subprocess.call(
-        [  # noqa: S603  # check for execution of untrusted input
-            "flatc",
-            "-o",
-            str(output_directory),
-            str(fbs_schema_path),
-            "--",
-            str(fbs_path),
-            "--json",
-            "--strict-json",
-            "--natural-utf8",
-            "--defaults-json",
-            "--unknown-json",
-            "--raw-binary",
-            # unfortunately not in older versions
-            # "--no-warnings",
-            "--force-empty",
-        ],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    if code != 0:
-        raise ValueError(f"flatc failed with code {code}")
+    args = [
+        "flatc",
+        "-o",
+        str(output_directory),
+        str(fbs_schema_path),
+        "--",
+        str(fbs_path),
+        "--json",
+        "--strict-json",
+        "--natural-utf8",
+        "--defaults-json",
+        "--unknown-json",
+        "--raw-binary",
+        # "--no-warnings",
+        "--force-empty",
+    ]
+    result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)  # noqa: S603, UP022
+    if result.returncode != 0:
+        file = pathlib.Path(tempfile.mktemp(".log"))
+        file.write_bytes(result.stdout + b"\n\n\n\n" + result.stderr)
+        raise ValueError(
+            f"flatc failed with code {result.returncode}: {file} `{shlex.join(args)}` (random exit code likely means a faulty FBS file was provided)",
+        )
 
     return pathlib.Path(output_directory) / (pathlib.Path(fbs_path).stem + ".json")
 
@@ -145,8 +146,8 @@ async def update_fbs_schema(*, force: bool = False) -> None:
             continue
 
         UPDATED_FBS[server] = True
-        directory = resolve_fbs_schema_directory(server).parent
-        await git.update_repository("MooncellWiki/OpenArknightsFBS", directory, branch=branch, force=force)
+        directory = resolve_fbs_schema_directory(server).parent  # pyright: ignore[reportArgumentType]
+        await git.download_repository("MooncellWiki/OpenArknightsFBS", directory, branch=branch, force=force)
 
 
 def recursively_collapse_keys(obj: typing.Any) -> typing.Any:
@@ -333,6 +334,19 @@ class BundleAssets(base.Assets):
         network: netn.NetworkSession | None = None,
         json_loads: typing.Callable[[bytes], typing.Any] = json.loads,
     ) -> None:
+        try:
+            # ensure optional dependencies have been installed
+            import bson  # noqa: F401 # type: ignore
+            import Crypto.Cipher.AES  # noqa: F401 # type: ignore
+            import PIL  # noqa: F401 # type: ignore
+            import UnityPy  # noqa: F401 # type: ignore
+        except ImportError as e:
+            raise ImportError("Cannot use BundleAssets without arkprts[assets]") from e
+        try:
+            subprocess.run(["flatc", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)  # noqa: S603
+        except OSError as e:
+            raise ImportError("Cannot use BundleAssets without a flatc executable") from e
+
         super().__init__(default_server=default_server or "en", json_loads=json_loads)
 
         temporary_directory = pathlib.Path(tempfile.gettempdir())

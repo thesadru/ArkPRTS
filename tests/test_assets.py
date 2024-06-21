@@ -1,5 +1,7 @@
 """Test game assets."""
 
+import pytest
+
 import arkprts
 
 
@@ -9,10 +11,14 @@ async def test_update(client: arkprts.Client) -> None:
 
 
 async def test_bundle_assets() -> None:
-    assets = arkprts.BundleAssets()
-    await assets.update_assets()
+    try:
+        assets = arkprts.BundleAssets()
+    except ImportError:
+        pytest.skip("Environment is not ready for bundle download.")
+    else:
+        await assets.update_assets(force=True)
 
-    await assets.network.close()
+        await assets.network.close()
 
 
 async def test_git_assets() -> None:

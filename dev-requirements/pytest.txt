@@ -1,5 +1,5 @@
 pytest
-pytest-asyncio==0.21.1
+pytest-asyncio
 pytest-dotenv
 pytest-cov
 coverage[toml]

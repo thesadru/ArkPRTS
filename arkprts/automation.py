@@ -21,46 +21,6 @@ from .client import CoreClient
 __all__ = ["AutomationClient"]
 
 
-def recursively_update_dict(
-    target: typing.MutableMapping[typing.Any, typing.Any],
-    source: typing.Mapping[typing.Any, typing.Any],
-) -> None:
-    """Recursively update a dictionary.
-
-    This is used to update the player data.
-    """
-    for key, value in source.items():
-        if isinstance(value, dict):
-            recursively_update_dict(target[key], typing.cast("dict[object, object]", value))
-        elif isinstance(value, list):
-            for i, v in enumerate(typing.cast("list[object]", value)):
-                if isinstance(v, dict):
-                    recursively_update_dict(target[key][i], typing.cast("dict[object, object]", v))
-        else:
-            target[key] = value
-
-
-def recursively_delete_dict(
-    target: typing.MutableMapping[typing.Any, typing.Any],
-    source: typing.Mapping[typing.Any, typing.Any],
-) -> None:
-    """Recursively delete items from a dictionary.
-
-    This is used to update the player data.
-    """
-    for key, value in source.items():
-        if isinstance(value, dict):
-            recursively_delete_dict(target[key], typing.cast("dict[object, object]", value))
-        elif isinstance(value, list):
-            for i, v in enumerate(typing.cast("list[object]", value)):
-                if isinstance(v, dict):
-                    recursively_delete_dict(target[key][i], typing.cast("dict[object, object]", v))
-                else:
-                    target[key].remove(v)
-        else:
-            del target[key]
-
-
 # https://github.com/Rhine-Department-0xf/Rhine-DFramwork/blob/main/client/encryption.py
 
 
@@ -164,8 +124,7 @@ class AutomationClient(CoreClient):
 
         Does not implement deleted as it is often overwritten with "modified".
         """
-        recursively_delete_dict(self.data, delta["deleted"])
-        recursively_update_dict(self.data, delta["modified"])
+        self.data.update(delta["modified"])
 
     async def request(self, endpoint: str, json: typing.Mapping[str, object] = {}, **kwargs: typing.Any) -> typing.Any:
         """Send an authenticated request to the arknights game server."""

@@ -72,6 +72,7 @@ async def download_github_tarball(
 ) -> pathlib.Path:
     """Download a tarball from github."""
     destination = pathlib.Path(destination or tempfile.mktemp(f"{repository.split('/')[-1]}.tar.gz"))
+    destination.parent.mkdir(parents=True, exist_ok=True)
     if branch == "HEAD":
         url = f"https://api.github.com/repos/{repository}/tarball"
     else:
@@ -93,7 +94,7 @@ def decompress_tarball(path: PathLike, destination: PathLike, *, allow: str = "*
 
         members: list[tarfile.TarInfo] = []
         for member in tar.getmembers():
-            if not fnmatch.fnmatch(allow, member.name):
+            if not fnmatch.fnmatch(member.name, allow):
                 continue
 
             member.name = member.name[len(top_directory + "/") :]
@@ -116,7 +117,7 @@ async def download_repository(
     destination = pathlib.Path(destination)
     commit_file = destination / "commit.txt"
 
-    if not force and commit_file.exists() and time.time() - commit_file.stat().st_mtime < 60 * 60 * 6:
+    if not force and commit_file.exists() and time.time() - commit_file.stat().st_mtime < 60:
         LOGGER.debug("%s was updated recently, skipping download", repository)
         return
 
@@ -138,10 +139,8 @@ async def download_repository(
     )
 
     LOGGER.debug("Decompressing %s", repository)
-    tarball_commit = decompress_tarball(tarball_path, destination, allow=allow)
-    LOGGER.debug("Decompressed %s %s", repository, tarball_commit)
-    if tarball_commit not in commit:
-        raise RuntimeError(f"Tarball commit {tarball_commit} does not match github commit {commit}")
+    decompress_tarball(tarball_path, destination, allow=allow)
+    LOGGER.debug("Decompressed %s %s", repository, commit)
 
     # sometimes the contents are identical, we still want to update the mtime
     commit_file.write_text(commit)
@@ -166,6 +165,9 @@ async def update_git_repository(repository: str, directory: PathLike, *, branch:
             cwd=directory.parent,
         )
         await proc.wait()
+        old_directory = directory.parent / repository.split("/", 1)[1]
+        if directory != old_directory:
+            old_directory.rename(directory)
     else:
         LOGGER.info("Updating %s in %s", repository, directory)
         proc = await asyncio.create_subprocess_exec("git", "pull", cwd=directory)

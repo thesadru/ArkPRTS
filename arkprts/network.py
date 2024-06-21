@@ -168,7 +168,7 @@ class NetworkSession:
             url = url + "/" + endpoint
 
         if method is None:
-            method = "POST" if kwargs.get("json") else "GET"
+            method = "POST" if kwargs.get("json") is not None else "GET"
 
         data = await self.raw_request(method, url, **kwargs)
 

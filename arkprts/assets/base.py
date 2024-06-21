@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import abc
 import bisect
-import importlib.util
 import json
 import logging
 import pathlib
@@ -57,16 +56,13 @@ class Assets(abc.ABC):
     ) -> Assets:
         """Create a new assets file based on what libraries are available."""
         try:
-            importlib.util.find_spec("UnityPy")
-        except ImportError:
-            from . import git
-
-            LOGGER.debug("Creating GitAssets due to UnityPy being unavailable")
-            return git.GitAssets(path, default_server=default_server or "en")
-        else:
             from . import bundle
 
             return bundle.BundleAssets(path, default_server=default_server, network=network)
+        except ImportError:
+            from . import git
+
+            return git.GitAssets(path, default_server=default_server or "en")
 
     @abc.abstractmethod
     async def update_assets(self) -> None:
