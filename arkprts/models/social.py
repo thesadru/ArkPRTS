@@ -81,6 +81,8 @@ class AssistChar(base.BaseModel):
     """Equipped modules. Module ID to module info."""
     tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
     """Alternative operator class data. Only for Amiya."""
+    variations: typing.Mapping[str, "AssistChar"] = pydantic.Field(default_factory=dict, repr=False)
+    """All representations of amiya."""
 
     @property
     def static(self) -> base.DDict:

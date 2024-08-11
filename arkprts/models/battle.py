@@ -68,6 +68,8 @@ class Character(base.BaseModel):
 
     tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
     """Alternative operator class data. Only for Amiya."""
+    variations: typing.Mapping[str, "Character"] = pydantic.Field(default_factory=dict, repr=False)
+    """All representations of amiya."""
 
 
 class Signature(base.BaseModel):

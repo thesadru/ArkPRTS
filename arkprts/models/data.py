@@ -145,6 +145,8 @@ class SquadSlot(base.BaseModel):
     """Currently equipped module ID."""
     tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
     """Alternative operator class data. Only for Amiya."""
+    variations: typing.Mapping[str, "SquadSlot"] = pydantic.Field(default_factory=dict, repr=False)
+    """All representations of amiya."""
 
 
 class Squads(base.BaseModel):
@@ -224,6 +226,8 @@ class Character(base.BaseModel):
     """Whether the operator is marked as favorite."""
     tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
     """Alternative operator class data. Only for Amiya."""
+    variations: typing.Mapping[str, "Character"] = pydantic.Field(default_factory=dict, repr=False)
+    """All representations of amiya."""
 
     @property
     def static(self) -> base.DDict:
@@ -287,6 +291,8 @@ class AssistChar(base.BaseModel):
     """Currently equipped module."""
     tmpl: typing.Mapping[str, base.DDict] = pydantic.Field(default_factory=base.DDict, repr=False)
     """Alternative operator class data. Only for Amiya."""
+    variations: typing.Mapping[str, "AssistChar"] = pydantic.Field(default_factory=dict, repr=False)
+    """All representations of amiya."""
 
 
 class Social(base.BaseModel):

@@ -116,6 +116,7 @@ class NetworkSession:
         url: str,
         *,
         headers: typing.Mapping[str, str] | None = None,
+        handle_errors: bool = True,
         **kwargs: typing.Any,
     ) -> typing.Any:
         """Send a request to an arbitrary endpoint."""
@@ -128,11 +129,11 @@ class NetworkSession:
                 resp.raise_for_status()
                 raise errors.InvalidContentTypeError(await resp.text()) from e
 
-            if data.get("error"):
-                raise errors.GameServerError(data)
-
-            if resp.status != 200:
-                raise errors.InvalidStatusError(resp.status, data)
+            if handle_errors:
+                if data.get("error"):
+                    raise errors.GameServerError(data)
+                if resp.status != 200:
+                    raise errors.InvalidStatusError(resp.status, data)
 
             return data
 
@@ -143,6 +144,7 @@ class NetworkSession:
         *,
         server: ArknightsServer | None = None,
         method: str | None = None,
+        handle_errors: bool = True,
         **kwargs: typing.Any,
     ) -> typing.Any:
         """Send a request to an arknights server."""
@@ -170,9 +172,9 @@ class NetworkSession:
         if method is None:
             method = "POST" if kwargs.get("json") is not None else "GET"
 
-        data = await self.raw_request(method, url, **kwargs)
+        data = await self.raw_request(method, url, handle_errors=handle_errors, **kwargs)
 
-        if "result" in data and isinstance(data["result"], int) and data["result"] != 0:
+        if handle_errors and "result" in data and isinstance(data["result"], int) and data["result"] != 0:
             if "captcha" in data:
                 raise errors.GeetestError(data)
 

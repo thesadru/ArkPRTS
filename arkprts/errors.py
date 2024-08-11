@@ -28,10 +28,10 @@ class ArkPrtsError(BaseArkprtsError):
 
     def __init__(self, data: typing.Mapping[str, typing.Any]) -> None:
         self.data = data
-        super().__init__(f"[{data.get('result')}] {self.message} {data}")
+        super().__init__(f"[{data.get('result')}] {self.message} {json.dumps(data)}")
 
 
-class GameServerError(BaseArkprtsError):
+class GameServerError(ArkPrtsError):
     """Game server error."""
 
     data: typing.Mapping[str, typing.Any]
@@ -49,7 +49,7 @@ class GameServerError(BaseArkprtsError):
         self.msg = data.get("msg", "")
         self.info = json.loads(data.get("info", "{}"))
 
-        super().__init__(str(data))
+        BaseArkprtsError.__init__(self, json.dumps(data))
 
 
 class GeetestError(ArkPrtsError):
@@ -65,7 +65,7 @@ class GeetestError(ArkPrtsError):
         super().__init__(data)
 
 
-class InvalidStatusError(BaseArkprtsError):
+class InvalidStatusError(ArkPrtsError):
     """Raised when a response has an invalid status code."""
 
     status: int
@@ -75,7 +75,7 @@ class InvalidStatusError(BaseArkprtsError):
         self.status = status
         self.data = data
 
-        super().__init__(f"[{status}] {data}")
+        BaseArkprtsError.__init__(self, f"[{status}] {json.dumps(data)}")
 
 
 class InvalidContentTypeError(BaseArkprtsError):

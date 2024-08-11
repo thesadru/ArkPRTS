@@ -16,7 +16,7 @@ parser.add_argument("--token", type=str, default="", help="Yostar Token")
 parser.add_argument("--server", type=str, default="en", help="Server to use")
 parser.add_argument("--guest", action="store_true", help="Whether to use a guest account.")
 
-subparsers: argparse._SubParsersAction[argparse.ArgumentParser] = parser.add_subparsers(dest="command", required=True)
+subparsers: "argparse._SubParsersAction[argparse.ArgumentParser]" = parser.add_subparsers(dest="command", required=True)
 
 parser_search: argparse.ArgumentParser = subparsers.add_parser("search", description="Get user info.")
 parser_search.add_argument(
@@ -29,7 +29,7 @@ parser_search.add_argument(
 
 parser_api: argparse.ArgumentParser = subparsers.add_parser("api", description="Make a request towards the API.")
 parser_api.add_argument("endpoint", type=str, nargs="?", help="Endpoint path, not full url")
-parser_api.add_argument("payload", type=str, nargs="?", default="{}", help="JSON payload")
+parser_api.add_argument("payload", type=str, nargs="?", default=r"{}", help="JSON payload")
 
 
 async def search(client: arkprts.Client, nickname: typing.Optional[str] = None) -> None:
@@ -70,14 +70,11 @@ async def search(client: arkprts.Client, nickname: typing.Optional[str] = None) 
 
 async def api(client: arkprts.Client, endpoint: str, payload: typing.Optional[str] = None) -> None:
     """Make a request."""
-    client.assets.loaded = True
     try:
-        data = await client.request(endpoint, json=payload and json.loads(payload))
+        data = await client.auth.auth_request(endpoint, json=payload and json.loads(payload), handle_errors=False)
         json.dump(data, sys.stdout, indent=4, ensure_ascii=False)
-    except arkprts.errors.GameServerError as e:
-        json.dump(e.data, sys.stdout, indent=4, ensure_ascii=False)
     finally:
-        await client.network.close()
+        await client.auth.network.close()
 
     sys.stdout.write("\n")
 

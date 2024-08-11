@@ -62,11 +62,15 @@ class BaseModel(pydantic.BaseModel, arbitrary_types_allowed=True):
         if client:
             _set_recursively(self, "client", client)
 
-    @pydantic.model_validator(mode="before")  # pyright: ignore
+    @pydantic.model_validator(mode="before")
+    @classmethod
     def _fix_amiya(cls, value: typing.Any, info: pydantic.ValidationInfo) -> typing.Any:
         """Flatten Amiya to only keep her selected form if applicable."""
         if value and value.get("tmpl"):
-            # tmplId present in battle replays
+            value["variations"] = {
+                tmplid: cls(value["client"], **{**value, **tmpl}) for tmplid, tmpl in value["tmpl"].items()
+            }
+            # tmplId present in battle replays, sometimes the tmpl for amiya guard is not actually present
             current_tmpl = value["currentTmpl"] if "currentTmpl" in value else value["tmplId"]
             current = value["tmpl"].get(current_tmpl, next(iter(value["tmpl"].values())))
             value.update(current)

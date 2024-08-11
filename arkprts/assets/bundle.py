@@ -343,7 +343,8 @@ class BundleAssets(base.Assets):
         except ImportError as e:
             raise ImportError("Cannot use BundleAssets without arkprts[assets]") from e
         try:
-            subprocess.run(["flatc", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)  # noqa: S603
+            cmd = ["flatc", "--version"]
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)  # noqa: S603
         except OSError as e:
             raise ImportError("Cannot use BundleAssets without a flatc executable") from e
 

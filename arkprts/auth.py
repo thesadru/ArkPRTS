@@ -180,7 +180,7 @@ class CoreAuth(typing.Protocol):
         """Send an authenticated request to the arkights game server."""
 
 
-class Auth(abc.ABC, CoreAuth):
+class Auth(CoreAuth):
     """Authentication client for single sessions."""
 
     server: netn.ArknightsServer
@@ -188,7 +188,7 @@ class Auth(abc.ABC, CoreAuth):
     network: netn.NetworkSession
     """Network session."""
     device_ids: tuple[str, str, str]
-    """Device ids."""
+    """Random device ids."""
     session: AuthSession
     """Authentication session."""
 
@@ -206,6 +206,25 @@ class Auth(abc.ABC, CoreAuth):
         self.session = AuthSession(self.server, "", "")
         self.device_ids = create_random_device_ids()
 
+    @classmethod
+    def create(
+        cls,
+        server: netn.ArknightsServer | None = None,
+        *,
+        network: netn.NetworkSession | None = None,
+    ) -> Auth:
+        """Find and create an appropriate auth client."""
+        if server in ("en", "jp", "kr"):
+            return YostarAuth(server, network=network)
+        if server == "cn":
+            return HypergryphAuth(server, network=network)
+        if server == "bili":
+            return BilibiliAuth(server, network=network)
+        if server == "tw":
+            return LongchengAuth(server, network=network)
+
+        return cls(server, network=network)
+
     @property
     def uid(self) -> str:
         """Arknights user UID."""
@@ -215,6 +234,11 @@ class Auth(abc.ABC, CoreAuth):
     def secret(self) -> str:
         """Arknights session token."""
         return self.session.secret
+
+    @property
+    def seqnum(self) -> int:
+        """Last sent seqnum."""
+        return self.session.seqnum
 
     async def request(
         self,
@@ -329,21 +353,23 @@ class Auth(abc.ABC, CoreAuth):
         network: netn.NetworkSession | None = None,
     ) -> Auth:
         """Create a client from a token."""
-        if server in ("en", "jp", "kr"):
-            auth = YostarAuth(server, network=network)
-            await auth.login_with_token(channel_uid, token)
-        elif server == "cn":
-            auth = HypergryphAuth(server, network=network)
-            await auth.login_with_token(channel_uid, token)
-        elif server == "bili":
-            auth = BilibiliAuth(server, network=network)
-            await auth.login_with_token(channel_uid, token)
-        elif server == "tw":
-            auth = LongchengAuth(server, network=network)
-            await auth.login_with_token(channel_uid, token)
-        else:
-            raise ValueError(f"Cannot create a generic auth client for server {server!r}")
+        auth = cls.create(server, network=network)
+        await auth.login_with_token(channel_uid, token)
+        return auth
 
+    @classmethod
+    async def from_session(
+        cls,
+        server: netn.ArknightsServer,
+        *,
+        uid: str,
+        secret: str,
+        seqnum: str | int,
+        network: netn.NetworkSession,
+    ) -> Auth:
+        """Create an auth from an already ongoing session."""
+        auth = cls.create(server, network=network)
+        auth.session = AuthSession(server, uid=uid, secret=secret, seqnum=int(seqnum))
         return auth
 
 
@@ -491,14 +517,14 @@ class HypergryphAuth(Auth):
             "platform": 1,
         }
         data["sign"] = generate_u8_sign(data)
-        data = await self.network.request("as", "user/login", json=data)
+        data = await self.request("as", "user/login", json=data)
         return data["token"]
 
     async def _get_hypergryph_uid(self, token: str) -> str:
         """Get a channel uid from a hypergryph access token."""
         data = {"token": token}
         data["sign"] = generate_u8_sign(data)
-        data = await self.network.request("as", "user/auth", json=data)
+        data = await self.request("as", "user/auth", json=data)
         return data["uid"]
 
     async def login_with_token(self, channel_uid: str, access_token: str) -> None:

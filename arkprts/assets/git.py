@@ -80,7 +80,7 @@ async def download_github_tarball(
 
     async with aiohttp.ClientSession(auto_decompress=False) as session, session.get(url) as response:
         response.raise_for_status()
-        with destination.open("wb") as file:  # noqa: ASYNC101  # would need another dependency
+        with destination.open("wb") as file:  # noqa: ASYNC230
             async for chunk in response.content.iter_any():
                 file.write(chunk)
 
@@ -124,8 +124,11 @@ async def download_repository(
     try:
         commit = await get_github_repository_commit(repository, branch=branch)
     except aiohttp.ClientResponseError:
-        LOGGER.warning("Failed to get %s commit, skipping download", repository, exc_info=True)
-        return
+        if commit_file.exists():
+            LOGGER.warning("Failed to get %s commit, skipping download", repository, exc_info=True)
+            return
+
+        commit = "null"
 
     if not force and commit_file.exists() and commit_file.read_text() == commit:
         LOGGER.debug("%s is up to date [%s]", repository, commit)
