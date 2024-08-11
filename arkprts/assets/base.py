@@ -38,10 +38,10 @@ class Assets(abc.ABC):
     def __init__(
         self,
         *,
-        default_server: netn.ArknightsServer = "en",
+        default_server: netn.ArknightsServer | None = None,
         json_loads: typing.Callable[[bytes], typing.Any] = json.loads,
     ) -> None:
-        self.default_server = default_server
+        self.default_server = default_server or "en"
         self.loaded = False
         self.excel_cache = {}
         self.json_loads = json_loads
@@ -75,10 +75,6 @@ class Assets(abc.ABC):
     def get_file(self, path: str, *, server: netn.ArknightsServer | None = None) -> bytes:
         """Get an extracted asset file. If server is None any server is allowed with preference for default server."""
 
-    @abc.abstractmethod
-    async def aget_file(self, path: str, *, server: netn.ArknightsServer | None = None) -> bytes:
-        """Get an extracted asset file without requiring load."""
-
     def get_excel(self, name: str, *, server: netn.ArknightsServer | None = None) -> models.DDict:
         """Get a gamedata table file."""
         path = f"gamedata/excel/{name}.json"
@@ -86,17 +82,6 @@ class Assets(abc.ABC):
             return models.DDict(data)
 
         data = self.json_loads(self.get_file(path, server=server))
-        self.excel_cache[server or self.default_server][path] = data
-
-        return models.DDict(data)
-
-    async def aget_excel(self, name: str, *, server: netn.ArknightsServer | None = None) -> models.DDict:
-        """Get a gamedata table file without requiring load."""
-        path = f"gamedata/excel/{name}.json"
-        if data := self.excel_cache.setdefault(server or self.default_server, {}).get(path):
-            return models.DDict(data)
-
-        data = self.json_loads(await self.aget_file(path, server=server))
         self.excel_cache[server or self.default_server][path] = data
 
         return models.DDict(data)
@@ -113,9 +98,22 @@ class Assets(abc.ABC):
         return getattr(super(), name)
 
     # helper stuff
+
+    def get_full_character_table(self, *, server: netn.ArknightsServer | None = None) -> models.DDict:
+        """character_table but with amiya alters."""
+        character_table = self.get_excel("character_table")
+        character_table.update(self.get_excel("char_patch_table")["patchChars"])
+
+        return character_table
+
+    @property
+    def full_character_table(self) -> models.DDict:
+        """character_table but with amiya alters."""
+        return self.get_full_character_table()
+
     def get_operator(self, id: str, *, server: netn.ArknightsServer | None = None) -> models.DDict:
         """Get an operator."""
-        data = self.get_excel("character_table", server=server)
+        data = self.get_full_character_table(server=server)
         return data[id]
 
     def get_item(self, id: str, *, server: netn.ArknightsServer | None = None) -> models.DDict:

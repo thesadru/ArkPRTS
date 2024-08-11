@@ -81,7 +81,6 @@ import logging
 import pathlib
 import random
 import string
-import tempfile
 import time
 import typing
 import urllib.parse
@@ -826,7 +825,7 @@ class GuestAuth(MultiAuth):
         elif isinstance(cache, (pathlib.Path, str)):
             self.cache_path = pathlib.Path(cache).expanduser()
         elif cache is None:
-            self.cache_path = pathlib.Path(tempfile.gettempdir()) / "arkprts_auth_cache.json"
+            self.cache_path = netn.APPDATA_DIR / "arkprts_auth_cache.json"
         else:
             self.cache_path = None
             self.upcoming_auth = list(cache)

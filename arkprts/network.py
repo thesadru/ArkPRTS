@@ -27,6 +27,10 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
+import pathlib
+import platform
+import tempfile
 import typing
 
 import aiohttp
@@ -64,6 +68,17 @@ DEFAULT_HEADERS: typing.Mapping[str, str] = {
     "User-Agent": "Dalvik/2.1.0 (Linux; U; Android 11; KB2000 Build/RP1A.201005.001)",
     "Connection": "Keep-Alive",
 }
+
+if platform.system() == "Windows":
+    _localappdata = pathlib.Path(os.getenv("LOCALAPPDATA", "~/AppData/Local"))
+elif platform.system() == "Darwin":
+    _localappdata = pathlib.Path("~/Library/Application Support/")
+else:
+    _localappdata = pathlib.Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
+
+APPDATA_DIR = _localappdata.expanduser() / "arkprts"
+TEMP_DIR = pathlib.Path(tempfile.gettempdir()) / "arkprts"
+
 
 # aiohttp uses a very noisy library
 _charset_normalizer_logger = logging.getLogger("charset_normalizer")

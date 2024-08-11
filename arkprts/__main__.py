@@ -48,7 +48,7 @@ async def search(client: arkprts.Client, nickname: typing.Optional[str] = None) 
         print(f"Resume: {player.resume}")
         print(
             f"Current stage: {player.main_stage_progress} | Characters: {player.char_cnt} | Furniture: {player.furn_cnt} | "
-            f"Secretary: {client.assets.character_table[player.secretary].name}",
+            f"Secretary: {client.assets.full_character_table[player.secretary].name}",
         )
         print(f"Playing since: {player.register_ts.isoformat()}")
         print(f"Last Online: {player.last_online_time.isoformat()}")

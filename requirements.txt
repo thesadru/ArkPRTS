@@ -5,4 +5,3 @@ rsa
 pycryptodome
 UnityPy
 bson
-Pillow

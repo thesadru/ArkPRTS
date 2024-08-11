@@ -27,7 +27,7 @@ async def test_git_assets() -> None:
 
 
 def test_access(client: arkprts.Client) -> None:
-    operator = client.assets.character_table["char_002_amiya"]
+    operator = client.assets.full_character_table["char_1001_amiya2"]
     assert operator.name == "Amiya"
 
 

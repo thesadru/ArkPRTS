@@ -87,7 +87,7 @@ class AssistChar(base.BaseModel):
     @property
     def static(self) -> base.DDict:
         """Static data for this operator."""
-        return self.client.assets.character_table[self.char_id]
+        return self.client.assets.full_character_table[self.char_id]
 
     @property
     def trust(self) -> int:

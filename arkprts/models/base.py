@@ -68,12 +68,14 @@ class BaseModel(pydantic.BaseModel, arbitrary_types_allowed=True):
         """Flatten Amiya to only keep her selected form if applicable."""
         if value and value.get("tmpl"):
             value["variations"] = {
-                tmplid: cls(value["client"], **{**value, **tmpl}) for tmplid, tmpl in value["tmpl"].items()
+                tmplid: cls(**{**value, **tmpl, "tmpl": {}, "charId": tmplid})  # pyright: ignore
+                for tmplid, tmpl in value["tmpl"].items()
             }
             # tmplId present in battle replays, sometimes the tmpl for amiya guard is not actually present
             current_tmpl = value["currentTmpl"] if "currentTmpl" in value else value["tmplId"]
             current = value["tmpl"].get(current_tmpl, next(iter(value["tmpl"].values())))
             value.update(current)
+            value["charId"] = current_tmpl
 
         return value
 

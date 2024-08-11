@@ -29,22 +29,18 @@ __all__ = ("GitAssets",)
 
 LOGGER: logging.Logger = logging.getLogger("arkprts.assets.git")
 
-CN_GAMEDATA_REPOSITORY = "Kengxxiao/ArknightsGameData"  # master
-GLOBAL_GAMEDATA_REPOSITORY = "Kengxxiao/ArknightsGameData_YoStar"  # main
-TW_GAMEDATA_REPOSITORY = "aelurum/ArknightsGameData"  # zh-tw fork  # master_v2
-RESOURCES_REPOSITORY = "Aceship/Arknight-Images"  # main
-ALT_RESOURCES_REPOSITORY = "yuanyan3060/ArknightsGameResource"  # contains zh-cn files  # main
-
-GAMEDATA_LANGUAGE: typing.Mapping[netn.ArknightsServer, str] = {
-    "en": "en_US",
-    "jp": "ja_JP",
-    "kr": "ko_KR",
-    "cn": "zh_CN",
-    "bili": "zh_CN",
-    "tw": "zh_TW",
-}
-
 PathLike = typing.Union[pathlib.Path, str]
+
+CN_GAMEDATA_REPOSITORY = "Kengxxiao/ArknightsGameData"  # master
+YOSTAR_GAMEDATA_REPOSITORY = "Kengxxiao/ArknightsGameData_YoStar"  # main
+
+LANGUAGE_PATH: typing.Mapping[netn.ArknightsServer, PathLike] = {
+    "cn": "ArknightsGameData/zh_CN",
+    "bili": "ArknightsGameData/zh_CN",
+    "en": "ArknightsGameData_YoStar/en_US",
+    "jp": "ArknightsGameData_YoStar/ja_JP",
+    "kr": "ArknightsGameData_YoStar/ko_KR",
+}
 
 
 async def download_github_file(repository: str, path: str, *, branch: str = "HEAD") -> bytes:
@@ -206,80 +202,33 @@ async def update_repository(
 class GitAssets(base.Assets):
     """Game assets client downloaded through 3rd party git repositories."""
 
-    gamedata_directory: pathlib.Path
-    resources_directory: pathlib.Path
-    gamedata_repository: str
-    resources_repository: str
+    parent_directory: pathlib.Path
+    """Parent directory of ArknightsGameData and ArnightsGameData_YoStar"""
 
     def __init__(
         self,
-        gamedata_directory: PathLike | None = None,
-        resources_directory: PathLike | None = None,
-        gamedata_repository: str | None = None,
-        resources_repository: str | None = None,
+        parent_directory: PathLike | None = None,
         *,
         default_server: netn.ArknightsServer = "en",
         json_loads: typing.Callable[[bytes], typing.Any] = json.loads,
     ) -> None:
         super().__init__(default_server=default_server, json_loads=json_loads)
 
-        default_directory = pathlib.Path(tempfile.gettempdir())
+        self.parent_directory = pathlib.Path(parent_directory or netn.APPDATA_DIR)
 
-        if gamedata_repository:
-            self.gamedata_repository = gamedata_repository
-        elif self.default_server == "cn":
-            self.gamedata_repository = CN_GAMEDATA_REPOSITORY
-        elif self.default_server == "tw":
-            self.gamedata_repository = TW_GAMEDATA_REPOSITORY
-        else:
-            self.gamedata_repository = GLOBAL_GAMEDATA_REPOSITORY
-
-        self.resources_repository = resources_repository or RESOURCES_REPOSITORY
-
-        self.gamedata_directory = pathlib.Path(
-            gamedata_directory or default_directory / self.gamedata_repository.split("/")[1],
-        )
-        self.resources_directory = pathlib.Path(
-            resources_directory or default_directory / self.resources_repository.split("/")[1],
-        )
-
-    async def update_assets(
-        self,
-        resources: bool = False,
-        *,
-        force: bool = False,
-    ) -> None:
-        """Update game data.
-
-        Only gamedata for the default server is downloaded by default.
-        """
-        await update_repository(
-            self.gamedata_repository,
-            self.gamedata_directory,
-            allow="gamedata/excel/*",
-            force=force,
-        )
-
-        if resources:
-            await update_repository(self.resources_repository, self.resources_directory, force=force)
+    async def update_assets(self, *, force: bool = False) -> None:
+        """Update game data."""
+        for repo in (CN_GAMEDATA_REPOSITORY, YOSTAR_GAMEDATA_REPOSITORY):
+            await update_repository(
+                repo,
+                self.parent_directory / repo.split("/")[1],
+                allow="gamedata/excel/*",
+                force=force,
+            )
 
         self.loaded = True
 
     def get_file(self, path: str, *, server: netn.ArknightsServer | None = None) -> bytes:
         """Get an extracted asset file."""
-        if "gamedata" in path:
-            directory = self.gamedata_directory / GAMEDATA_LANGUAGE[server or self.default_server]
-        else:
-            directory = self.resources_directory
-
+        directory = self.parent_directory / LANGUAGE_PATH[server or self.default_server]
         return (directory / path).read_bytes()
-
-    async def aget_file(self, path: str, *, server: netn.ArknightsServer | None = None) -> bytes:
-        """Get an extracted asset file without requiring load."""
-        if "gamedata" in path:
-            repository = self.gamedata_repository
-            path = f"{GAMEDATA_LANGUAGE[server or self.default_server]}/{path}"
-        else:
-            repository = self.resources_repository
-
-        return await download_github_file(repository, path)

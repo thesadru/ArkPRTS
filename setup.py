@@ -13,10 +13,10 @@ setup(
     package_data={"arkprts": ["py.typed"]},
     install_requires=["aiohttp", "pydantic==2.*"],
     extras_require={
-        "all": ["rsa", "pycryptodome", "UnityPy", "Pillow", "bson"],
+        "all": ["rsa", "pycryptodome", "UnityPy", "bson"],
         "rsa": ["rsa"],
         "aes": ["pycryptodome"],
-        "assets": ["UnityPy", "pycryptodome", "Pillow", "bson"],
+        "assets": ["UnityPy", "pycryptodome", "bson"],
     },
     long_description=pathlib.Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
