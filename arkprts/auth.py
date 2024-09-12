@@ -831,6 +831,7 @@ class GuestAuth(MultiAuth):
             self.upcoming_auth = list(cache)
 
         if self.cache_path:
+            self.cache_path.parent.mkdir(parents=True, exist_ok=True)
             self.upcoming_auth.extend(self._load_cache())
 
     def _load_cache(self) -> typing.Sequence[RawAuthMapping]:
