@@ -37,7 +37,7 @@ from . import network as netn
 if typing.TYPE_CHECKING:
     from typing_extensions import Self
 
-__all__ = ["Client"]
+__all__ = ["Client", "search_players"]
 
 
 class CoreClient:
@@ -239,7 +239,7 @@ class Client(CoreClient):
         server: netn.ArknightsServer | None = None,
     ) -> typing.Sequence[models.Player]:
         """Get players and return a model."""
-        data = await self.get_raw_player_info(ids, server=server)
+        data = await self.get_raw_friend_info(ids, server=server)
         return [models.Player(client=self, **i) for i in data["friends"]]
 
     async def get_partial_players(
@@ -248,7 +248,7 @@ class Client(CoreClient):
         *,
         server: netn.ArknightsServer | None = None,
     ) -> typing.Sequence[models.PartialPlayer]:
-        """Get players and return a model."""
+        """Get partial players and return a model."""
         data = await self.get_raw_player_info(ids, server=server)
         return [models.PartialPlayer(client=self, **i) for i in data["players"]]
 
@@ -272,3 +272,17 @@ class Client(CoreClient):
         """Get a battle replay and return a model."""
         data = await self.get_raw_battle_replay(battle_type, stage_id)
         return models.BattleReplay(client=self, **data)
+
+
+_default_client = Client()
+
+
+async def search_players(
+    nickname: str,
+    nicknumber: str = "",
+    *,
+    server: netn.ArknightsServer | None = None,
+    limit: int | None = None,
+) -> typing.Sequence[models.Player]:
+    """Search for a player and return a model. Uses a default global client."""
+    return await _default_client.search_players(nickname, nicknumber, server=server, limit=limit)
