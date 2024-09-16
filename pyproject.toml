@@ -1,7 +1,7 @@
 [project]
 name = "arkprts"
 requires-python = ">=3.9"
-version = "0.3.9"
+version = "0.3.10"
 dynamic = [
     "dependencies",
     "description",
