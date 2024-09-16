@@ -11,7 +11,6 @@ import fnmatch
 import io
 import json
 import logging
-import os
 import pathlib
 import re
 import shlex
@@ -33,7 +32,7 @@ PathLike = typing.Union[pathlib.Path, str]
 UnityPyAsset = typing.Any
 UnityPyObject = typing.Any
 
-UPDATED_FBS = {"cn": False, "yostar": False}
+UPDATED_FBS = {"cn": False, "yostar": False, "tw": False}
 
 
 def asset_path_to_server_filename(path: str) -> str:
@@ -109,7 +108,7 @@ def run_flatbuffers(
         "--defaults-json",
         "--unknown-json",
         "--raw-binary",
-        # "--no-warnings",
+        "--no-warnings",
         "--force-empty",
     ]
     result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)  # noqa: S603, UP022
@@ -124,16 +123,14 @@ def run_flatbuffers(
     return pathlib.Path(output_directory) / (pathlib.Path(fbs_path).stem + ".json")
 
 
-def resolve_fbs_schema_directory(server: typing.Literal["cn", "yostar"]) -> pathlib.Path:
+def resolve_fbs_schema_directory(server: typing.Literal["cn", "yostar", "tw"]) -> pathlib.Path:
     """Resolve the flatbuffers schema directory."""
-    path = os.environ.get(f"FLATBUFFERS_SCHEMA_DIR_{server.upper()}")
-    if path:
-        return pathlib.Path(path)
+    if server == "tw":
+        return netn.APPDATA_DIR / "ArknightsFlatbuffers" / "tw"
 
     core_path = netn.APPDATA_DIR / "ArknightsFBS"
     core_path.mkdir(parents=True, exist_ok=True)
     path = core_path / server / "OpenArknightsFBS" / "FBS"
-    os.environ[f"FLATBUFFERS_SCHEMA_DIR_{server.upper()}"] = str(path)
     return path
 
 
@@ -146,6 +143,14 @@ async def update_fbs_schema(*, force: bool = False) -> None:
         UPDATED_FBS[server] = True
         directory = resolve_fbs_schema_directory(server).parent  # pyright: ignore[reportArgumentType]
         await git.download_repository("MooncellWiki/OpenArknightsFBS", directory, branch=branch, force=force)
+
+    if not UPDATED_FBS["tw"] or force:
+        UPDATED_FBS["tw"] = True
+        await git.download_repository(
+            "ArknightsAssets/ArknightsFlatbuffers",
+            netn.APPDATA_DIR / "ArknightsFlatbuffers",
+            force=force,
+        )
 
 
 def recursively_collapse_keys(obj: typing.Any) -> typing.Any:
@@ -176,14 +181,14 @@ def decrypt_fbs_file(
     if rsa:
         data = data[128:]
 
-    tempdir = netn.TEMP_DIR / "ArknightsFBS"
+    tempdir = netn.TEMP_DIR / "ArknightsFBS" / server
     tempdir.mkdir(parents=True, exist_ok=True)
 
     fbs_path = tempdir / (table_name + ".bytes")
     fbs_path.write_bytes(data)
-    fbs_schema_path = resolve_fbs_schema_directory(server="cn" if server in ("cn", "bili") else "yostar") / (
-        table_name + ".fbs"
-    )
+    fbs_schema_path = resolve_fbs_schema_directory(
+        server="cn" if server in ("cn", "bili") else "tw" if server == "tw" else "yostar",
+    ) / (table_name + ".fbs")
     output_directory = tempdir / "output"
 
     output_path = run_flatbuffers(fbs_path, fbs_schema_path, output_directory)
@@ -242,40 +247,38 @@ def find_ab_assets(
     """Yield relative paths and data for a unity asset."""
     for container, obj in asset.container.items():
         if obj.type.name == "TextAsset":
+            data = obj.read()
+            script, name = data.m_Script.encode("utf-8", "surrogateescape"), data.m_Name
+
             if match := re.match(DYNP + r"(.+\.txt)", container):
-                data = obj.read()
-                yield (match[1], data.script)
+                yield (match[1], script)
                 continue
 
             if match := re.match(DYNP + r"(gamedata/.+?\.json)", container):
-                data = obj.read()
-                yield (match[1], normalize_json(bytes(data.script), lenient=not normalize))
+                yield (match[1], normalize_json(bytes(script), lenient=not normalize))
                 continue
 
             if match := re.match(DYNP + r"(gamedata/.+?)\.lua\.bytes", container):
-                data = obj.read()
-                text = decrypt_aes_text(data.script)
+                text = decrypt_aes_text(script)
                 yield (match[1] + ".lua", text)
                 continue
 
             if match := re.match(DYNP + r"(gamedata/levels/(?:obt|activities)/.+?)\.bytes", container):
-                data = obj.read()
                 try:
-                    text = normalize_json(bytes(data.script)[128:], lenient=not normalize)
+                    text = normalize_json(bytes(script)[128:], lenient=not normalize)
                 except UnboundLocalError:  # effectively bson's "type not recognized" error
-                    text = decrypt_fbs_file(data.script, "prts___levels", server=server)
+                    text = decrypt_fbs_file(script, "prts___levels", server=server)
 
                 yield (match[1] + ".json", text)
                 continue
 
             if match := re.match(DYNP + r"(gamedata/.+?)(?:[a-fA-F0-9]{6})?\.bytes", container):
-                data = obj.read()
                 # the only rsa-less file is ~~global~~ tw's enemy_database
-
+                # someone please verify this claim
                 text = decrypt_arknights_text(
-                    data.script,
-                    name=data.name,
-                    rsa=data.name != "enemy_database",
+                    script,
+                    name=name,
+                    rsa=name != "enemy_database",
                     server=server,
                     normalize=normalize,
                 )
