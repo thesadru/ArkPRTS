@@ -1,8 +1,0 @@
-sphinx
-sphinx-autobuild
-sphinx-autoapi
-numpydoc
-furo
-sphinx-material
-myst-parser
-sphinxext.opengraph

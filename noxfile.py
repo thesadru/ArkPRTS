@@ -12,8 +12,8 @@ from nox.command import CommandFailed
 nox.options.sessions = ["reformat", "lint", "type-check", "verify-types", "test", "prettier"]
 nox.options.reuse_existing_virtualenvs = True
 PACKAGE = "arkprts"
-GENERAL_TARGETS = ["./arkprts", "./tests", "./noxfile.py", "docs/conf.py"]
-PRETTIER_TARGETS = ["*.md", "docs/*.md", "docs/**/*.md", "*.yml"]
+GENERAL_TARGETS = ["./arkprts", "./tests", "./noxfile.py"]
+PRETTIER_TARGETS = ["*.md"]
 PYRIGHT_ENV = {"PYRIGHT_PYTHON_FORCE_VERSION": "latest"}
 
 LOGGER = logging.getLogger("nox")
@@ -37,30 +37,6 @@ def install_requirements(session: nox.Session, *requirements: str, literal: bool
         requirements = tuple(arg for file in files for arg in ("-r", file))
 
     session.install("--upgrade", "pip", *requirements, silent=not isverbose())
-
-
-@nox.session()
-def docs(session: nox.Session) -> None:
-    """Generate docs for this project using sphinx."""
-    install_requirements(session, "docs")
-
-    output = "docs/_build/html"
-
-    if "--autobuild" in session.posargs:
-        # sphinx-autobuild absolutely cannot do relative paths
-        session.run(
-            "sphinx-autobuild",
-            "docs",
-            output,
-            "--watch",
-            pathlib.Path(PACKAGE).resolve().as_posix(),
-            "--ignore",
-            pathlib.Path("docs/reference").resolve().as_posix(),
-            "--ignore",
-            "*.tmp",
-        )
-    else:
-        session.run("sphinx-build", "-M", "dirhtml", "docs", output)
 
 
 @nox.session()
@@ -94,20 +70,6 @@ def test(session: nox.Session) -> None:
     if isverbose():
         args += ["-vv", "--showlocals", "-o", "log_cli=true", "-o", "log_cli_level=DEBUG"]
 
-    if "--no-cov" in session.posargs:
-        session.posargs.remove("--no-cov")
-    else:
-        args += [
-            "--cov",
-            PACKAGE,
-            "--cov-report",
-            "term",
-            "--cov-report",
-            "html:coverage_html",
-            "--cov-report",
-            "xml",
-        ]
-
     session.run(
         "python",
         "-m",
@@ -119,9 +81,6 @@ def test(session: nox.Session) -> None:
         *session.posargs,
         success_codes=[0, 5],
     )
-
-    if "--cov" in args:
-        session.log(f"HTML coverage report: {pathlib.Path('coverage_html/index.html').resolve()}")
 
 
 @nox.session(name="type-check")
