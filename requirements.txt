@@ -3,5 +3,5 @@ pydantic==2.*
 
 rsa
 pycryptodome
-UnityPy
+UnityPy>=1.20
 bson
