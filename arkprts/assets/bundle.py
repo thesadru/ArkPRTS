@@ -7,7 +7,6 @@ Unfortunately assets are stored as unity files, so they need to be extracted.
 from __future__ import annotations
 
 import asyncio
-import fnmatch
 import io
 import json
 import logging
@@ -17,6 +16,7 @@ import shlex
 import subprocess
 import tempfile
 import typing
+import warnings
 import zipfile
 
 from arkprts import network as netn
@@ -37,7 +37,10 @@ UPDATED_FBS = {"cn": False, "yostar": False, "tw": False}
 
 def asset_path_to_server_filename(path: str) -> str:
     """Take a path to a zipped unity asset and return its filename on the server."""
-    filename = path.replace("/", "_").replace("#", "__").replace(".ab", ".dat")
+    if path == "hot_update_list.json":
+        return path
+
+    filename = path.replace("/", "_").replace("#", "__").rsplit(".", 1)[0] + ".dat"
     return filename
 
 
@@ -57,18 +60,18 @@ def resolve_unity_asset_cache(filename: str, server: netn.ArknightsServer) -> pa
     return path.with_suffix(".ab")
 
 
-def load_unity_file(stream: io.BytesIO | bytes) -> bytes:
+def load_unity_file(stream: io.BytesIO | bytes) -> typing.Sequence[UnityPyAsset]:
     """Load an unzipped arknights unity .ab file."""
     import UnityPy
+    import UnityPy.streams
 
     env: typing.Any = UnityPy.load(io.BytesIO(stream))  # pyright: ignore
-
-    bundle_file, *_ = env.files.values()
-    assert not _
-    asset_file, *_ = bundle_file.files.values()
-    assert not _
-
-    return asset_file
+    return [
+        asset_file
+        for bundle_file in env.files.values()
+        for asset_file in bundle_file.files.values()
+        if not isinstance(asset_file, UnityPy.streams.EndianBinaryReader)  # type: ignore
+    ]
 
 
 def decrypt_aes_text(data: bytes, *, rsa: bool = True) -> bytes:
@@ -251,38 +254,37 @@ def find_ab_assets(
 
             if match := re.match(DYNP + r"(.+\.txt)", container):
                 yield (match[1], script)
-                continue
 
-            if match := re.match(DYNP + r"(gamedata/.+?\.json)", container):
+            elif match := re.match(DYNP + r"((gamedata/)?.+?\.json)", container):
                 yield (match[1], normalize_json(bytes(script), lenient=not normalize))
-                continue
 
-            if match := re.match(DYNP + r"(gamedata/.+?)\.lua\.bytes", container):
+            elif match := re.match(DYNP + r"(gamedata/.+?)\.lua\.bytes", container):
                 text = decrypt_aes_text(script)
                 yield (match[1] + ".lua", text)
-                continue
 
-            if match := re.match(DYNP + r"(gamedata/levels/(?:obt|activities)/.+?)\.bytes", container):
+            elif match := re.match(DYNP + r"(gamedata/levels/(?:obt|activities)/.+?)\.bytes", container):
                 try:
                     text = normalize_json(bytes(script)[128:], lenient=not normalize)
                 except UnboundLocalError:  # effectively bson's "type not recognized" error
                     text = decrypt_fbs_file(script, "prts___levels", server=server)
 
                 yield (match[1] + ".json", text)
-                continue
 
-            if match := re.match(DYNP + r"(gamedata/.+?)(?:[a-fA-F0-9]{6})?\.bytes", container):
-                # the only rsa-less file is ~~global~~ tw's enemy_database
+            elif "gamedata/battle/buff_template_data.bytes" in container:
+                text = normalize_json(script)
+                yield ("gamedata/battle/buff_template_data.json", text)
 
+            elif match := re.match(DYNP + r"(gamedata/.+?)(?:[a-fA-F0-9]{6})?\.bytes", container):
                 text = decrypt_arknights_text(
                     script,
                     name=name,
-                    rsa=name != "enemy_database",
                     server=server,
                     normalize=normalize,
                 )
                 yield (match[1] + ".json", normalize_json(text, lenient=not normalize))
-                continue
+
+            else:
+                warnings.warn("Unrecognized container")
 
 
 def extract_ab(
@@ -295,16 +297,17 @@ def extract_ab(
     """Extract an AB file and save files. Returns a list of found files."""
     ab_path = pathlib.Path(ab_path)
     save_directory = pathlib.Path(save_directory)
-    asset = load_unity_file(ab_path.read_bytes())
+    assets = load_unity_file(ab_path.read_bytes())
 
     paths: list[pathlib.Path] = []
-    for unpacked_rel_path, unpacked_data in find_ab_assets(asset, server=server, normalize=normalize):
-        savepath = save_directory / server / unpacked_rel_path
-        savepath.parent.mkdir(exist_ok=True, parents=True)
-        savepath.write_bytes(unpacked_data)
+    for asset in assets:
+        for unpacked_rel_path, unpacked_data in find_ab_assets(asset, server=server, normalize=normalize):
+            savepath = save_directory / server / unpacked_rel_path
+            savepath.parent.mkdir(exist_ok=True, parents=True)
+            savepath.write_bytes(unpacked_data)
 
-        LOGGER.debug("Extracted asset %s from %s for server %s", unpacked_rel_path, ab_path.name, server)
-        paths.append(savepath)
+            LOGGER.debug("Extracted asset %s from %s for server %s", unpacked_rel_path, ab_path.name, server)
+            paths.append(savepath)
 
     return paths
 
@@ -396,33 +399,30 @@ class BundleAssets(base.Assets):
 
     async def update_assets(
         self,
-        allow: str = "gamedata/excel/*",
         *,
         server: netn.ArknightsServer | typing.Literal["all"] | None = None,
         force: bool = False,
         normalize: bool = False,
     ) -> None:
-        """Update game data.
-
-        Only gamedata for the default server is downloaded by default.
-        """
+        """Update game data."""
         server = server or self.default_server or "all"
         if server == "all":
             for server in netn.NETWORK_ROUTES:
-                await self.update_assets(allow, server=server, force=force, normalize=normalize)
+                await self.update_assets(server=server, force=force, normalize=normalize)
 
             return
 
         hot_update_list = await self._get_hot_update_list(server)
         old_hot_update_list = self._get_current_hot_update_list(server)
 
-        requested_names = [info["name"] for info in hot_update_list["abInfos"] if fnmatch.fnmatch(info["name"], allow)]
+        requested_names = [
+            info["name"] for info in hot_update_list["abInfos"] if info.get("meta") or "gamedata" in info["name"]
+        ]
         if old_hot_update_list and not force:
             outdated_names = set(get_outdated_hashes(hot_update_list, old_hot_update_list))
             requested_names = [name for name in requested_names if name in outdated_names]
 
-        if any("gamedata" in name for name in requested_names):
-            await update_fbs_schema()
+        await update_fbs_schema()
 
         # download and extract assets
         ab_file_paths = await asyncio.gather(
