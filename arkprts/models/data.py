@@ -319,6 +319,87 @@ class ConsumableExpire(base.BaseModel):
     """Amount of consumables."""
 
 
+class Stage(base.BaseModel):
+    """Stage run history."""
+
+    stage_id: str = pydantic.Field(alias="stageId")
+    """Stage ID."""
+    complete_times: int = pydantic.Field(alias="completeTimes")
+    """Number of times the stage was completed."""
+    start_times: int = pydantic.Field(alias="startTimes")
+    """Number of times the stage was started."""
+    practice_times: int = pydantic.Field(alias="practiceTimes")
+    """Number of times the stage was run with a practice ticket."""
+    state: int
+    """How many stars the stage was beaten with (1=fail)."""
+    has_battle_replay: int = pydantic.Field(alias="hasBattleReplay")
+    """Whether there is auto available.."""
+    no_cost_cnt: int = pydantic.Field(alias="noCostCnt")
+    """How many free runs are remaining."""
+
+
+class Dungeon(base.BaseModel):
+    """Battle history."""
+
+    stages: typing.Mapping[str, Stage]
+    """Stage run history."""
+
+
+class GachaNewbee(base.BaseModel):
+    """Newbie gacha data."""
+
+    open_flag: int = pydantic.Field(alias="openFlag")
+    """Whether the newbie bannercan be accessed."""
+    cnt: int
+    """Count of the remaining(?) banner pulls."""
+    pool_id: str = pydantic.Field(alias="poolId")
+    """ID of the banner."""
+
+
+class GachaNormal(base.BaseModel):
+    """Normal gacha data."""
+
+    cnt: int
+    """Pull count."""
+    max_cnt: int = pydantic.Field(alias="maxCnt")
+    """Maximum count before a rarity is guaranteed."""
+    rarity: int
+    """Guaranteed rarity after an amount of pulls."""
+    avail: bool
+    """Whether it is currently available."""
+
+
+class GachaLimit(base.BaseModel):
+    """Limited gacha metadata."""
+
+    least_free: int = pydantic.Field(alias="leastFree")
+    """IDK."""
+    pool_cnt: typing.Optional[int] = pydantic.Field(None, alias="poolCnt")
+    """Pull count."""
+    recruited_free_char: typing.Optional[bool] = pydantic.Field(None, alias="recruitedFreeChar")
+    """Whether the guaranteed character after a set amount of pulls was reached."""
+
+
+class GachaFesClassic(base.BaseModel):
+    """Which characters were selected for kernel banners."""
+
+    up_char: typing.Mapping[int, typing.List[str]] = pydantic.Field(alias="upChar")
+    """Which characters were selected for kernel banners"""
+
+
+class Gacha(base.BaseModel):
+    """Banner pulls."""
+
+    newbee: GachaNewbee
+    """Newbee banner data."""
+    normal: typing.Mapping[str, GachaNormal]
+    """Mapping of normal banner data by pool ID."""
+    limit: typing.Mapping[str, GachaLimit]
+    """Limited gacha metadata."""
+    fes_classic: typing.Mapping[str, GachaFesClassic] = pydantic.Field(alias="fesClassic")
+    """Which characters were selected for kernel banners."""
+
+
 class User(base.BaseModel, extra="ignore"):
     """User sync data. Not fully modeled."""
 
@@ -337,3 +418,7 @@ class User(base.BaseModel, extra="ignore"):
 
     To access the static data for an item, use `client.assets.get_item(item_id)`.
     """
+    dungeon: Dungeon
+    """Battle history."""
+    gacha: Gacha
+    """Banner pulls."""

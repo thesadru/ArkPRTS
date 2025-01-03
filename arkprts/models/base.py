@@ -15,7 +15,7 @@ __all__ = ("BaseModel", "DDict")
 
 # pydantic hack
 _fake_client = type("", (object,), {})()
-_fake_client.__class__ = CoreClient
+_fake_client.__class__ = CoreClient  # pyright: ignore
 
 
 def _set_recursively(obj: typing.Any, name: str, value: typing.Any) -> None:

@@ -1,5 +1,7 @@
 """Test authentication."""
 
+from __future__ import annotations
+
 import asyncio
 import collections
 import os
@@ -165,7 +167,7 @@ class MockGuestAuth(arkprts.GuestAuth):
     async def request(
         self,
         domain: arkprts.ArknightsDomain,
-        endpoint: typing.Optional[str] = None,
+        endpoint: str | None = None,
         **kwargs: typing.Any,
     ) -> typing.Any:
         if endpoint == "...":
