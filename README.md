@@ -4,10 +4,6 @@ Arknights python wrapper.
 
 Interacts directly with the game servers, no delays.
 
-支持**中文和B站**账户!
-
-<!-- Supports Chinese and BiliBili accounts -->
-
 ---
 
 Source Code: <https://github.com/thesadru/arkprts>
@@ -93,16 +89,6 @@ for item_id, subitems in user.consumable.items():
     for item in subitems.values():
         if count > 0:
             print(item_id, item.ts, item.count)
-```
-
-Logging in with email and password to the cn server.
-
-```py
-auth = arkprts.HypergryphAuth()
-await auth.login("doctor@qq.com", "wordpass12")
-client = arkprts.Client(auth=auth)
-
-await client.get_data()
 ```
 
 Making a new client when a global guest client already exists; without excess overhead.

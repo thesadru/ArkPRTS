@@ -19,18 +19,6 @@ The account however needs to bind a nickname before making any requests (after a
 - Use the access token and channel uid to get an arknights player uid and u8 token.
 - Use the arknights player uid and u8 token to get a session secret.
 
-
-## CN (HyperGryph)
-
-### Get a permanent token
-- Send unhashed username and password to receive an access token.
-- Optionally, send the access token to receive a channel uid.
-
-### Authenticate
-- Use the access token and channel uid to get an arknights player uid and u8 token.
-- Use the arknights player uid and u8 token to get a session secret.
-
-
 ## Bilibili
 
 ### Get a permanent token
@@ -98,7 +86,6 @@ __all__ = [
     "BilibiliAuth",
     "CoreAuth",
     "GuestAuth",
-    "HypergryphAuth",
     "LongchengAuth",
     "MultiAuth",
     "YostarAuth",
@@ -216,7 +203,7 @@ class Auth(CoreAuth):
         if server in ("en", "jp", "kr"):
             return YostarAuth(server, network=network)
         if server == "cn":
-            return HypergryphAuth(server, network=network)
+            raise NotImplementedError("Hypergryph authentication is not implemented.")
         if server == "bili":
             return BilibiliAuth(server, network=network)
         if server == "tw":
@@ -492,80 +479,6 @@ class YostarAuth(Auth):
         await self.login_with_token(channel_uid, yostar_token)
         await self._bind_nickname(nickname or "Doctor")
         return channel_uid, yostar_token
-
-
-class HypergryphAuth(Auth):
-    """Authentication client for chinese accounts."""
-
-    distributor: typing.Literal["hypergryph"]
-
-    def __init__(
-        self,
-        server: typing.Literal["cn"] = "cn",
-        *,
-        network: netn.NetworkSession | None = None,
-    ) -> None:
-        super().__init__(server, network=network)
-
-    async def _get_hypergryph_access_token(self, username: str, password: str) -> str:
-        """Get an access token from a username and password."""
-        data = {
-            "account": username,
-            "password": password,
-            "deviceId": self.device_ids[0],
-            "platform": 1,
-        }
-        data["sign"] = generate_u8_sign(data)
-        data = await self.request("as", "user/login", json=data)
-        return data["token"]
-
-    async def _get_hypergryph_uid(self, token: str) -> str:
-        """Get a channel uid from a hypergryph access token."""
-        data = {"token": token}
-        data["sign"] = generate_u8_sign(data)
-        data = await self.request("as", "user/auth", json=data)
-        return data["uid"]
-
-    async def login_with_token(self, channel_uid: str, access_token: str) -> None:
-        """Login with an access token."""
-        self.session.uid, u8_token = await self._get_u8_token(channel_uid, access_token)
-        await self._get_secret(self.session.uid, u8_token)
-
-    async def get_token_from_password(
-        self,
-        username: str | None = None,
-        password: str | None = None,
-        *,
-        stdin: bool = False,
-    ) -> tuple[str, str]:
-        """Get a token from a hypergryph account."""
-        if not username or not password:
-            if not stdin:
-                raise TypeError("Password not provided but stdin is disabled.")
-
-            username = input("Enter username: ")
-            password = input("Enter password: ")
-
-        access_token = await self._get_hypergryph_access_token(username, password)
-        channel_uid = await self._get_hypergryph_uid(access_token)
-        return channel_uid, access_token
-
-    async def login(
-        self,
-        username: str | None = None,
-        password: str | None = None,
-        *,
-        stdin: bool = True,
-    ) -> tuple[str, str]:
-        """Login with a hypergryph account."""
-        channel_uid, access_token = await self.get_token_from_password(username, password, stdin=stdin)
-        await self.login_with_token(channel_uid, access_token)
-
-        if stdin:
-            print(f"Channel UID: {channel_uid} Access token: {access_token}")  # noqa: T201
-            print(f'Usage: login_with_token("{channel_uid}", "{access_token}")')  # noqa: T201
-
-        return channel_uid, access_token
 
 
 class BilibiliAuth(Auth):

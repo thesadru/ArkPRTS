@@ -85,22 +85,22 @@ async def kr_client(pytestconfig: pytest.Config, network: arkprts.NetworkSession
     return arkprts.Client(auth)
 
 
-@pytest.fixture(scope="session")
-async def cn_client(network: arkprts.NetworkSession) -> arkprts.Client:
-    """Private cn client."""
-    channel_uid, access_token = os.environ.get("CN_CHANNEL_UID"), os.environ.get("CN_ACCESS_TOKEN")
-    if not channel_uid or not access_token:
-        cn_username, cn_password = os.environ.get("CN_USERNAME"), os.environ.get("CN_PASSWORD")
-        if cn_username:
-            auth = arkprts.HypergryphAuth(network=network)
-            channel_uid, access_token = await auth.login(cn_username, cn_password)
-            warnings.warn(f"Please use CN_CHANNEL_UID={channel_uid} CN_ACCESS_TOKEN={access_token}")
-            return arkprts.Client(auth)
+# @pytest.fixture(scope="session")
+# async def cn_client(network: arkprts.NetworkSession) -> arkprts.Client:
+#     """Private cn client."""
+#     channel_uid, access_token = os.environ.get("CN_CHANNEL_UID"), os.environ.get("CN_ACCESS_TOKEN")
+#     if not channel_uid or not access_token:
+#         cn_username, cn_password = os.environ.get("CN_USERNAME"), os.environ.get("CN_PASSWORD")
+#         if cn_username:
+#             auth = arkprts.HypergryphAuth(network=network)
+#             channel_uid, access_token = await auth.login(cn_username, cn_password)
+#             warnings.warn(f"Please use CN_CHANNEL_UID={channel_uid} CN_ACCESS_TOKEN={access_token}")
+#             return arkprts.Client(auth)
 
-        pytest.skip("CN_CHANNEL_UID or CN_ACCESS_TOKEN not set")
+#         pytest.skip("CN_CHANNEL_UID or CN_ACCESS_TOKEN not set")
 
-    auth = await arkprts.Auth.from_token("cn", channel_uid, access_token, network=network)
-    return arkprts.Client(auth)
+#     auth = await arkprts.Auth.from_token("cn", channel_uid, access_token, network=network)
+#     return arkprts.Client(auth)
 
 
 @pytest.fixture(scope="session")
@@ -145,10 +145,10 @@ def test_kr_client(kr_client: arkprts.Client) -> None:
     assert kr_client.auth.session.uid
 
 
-def test_cn_client(cn_client: arkprts.Client) -> None:
-    assert isinstance(cn_client.auth, arkprts.Auth)
-    assert cn_client.auth.server == "cn"
-    assert cn_client.auth.session.uid
+# def test_cn_client(cn_client: arkprts.Client) -> None:
+#     assert isinstance(cn_client.auth, arkprts.Auth)
+#     assert cn_client.auth.server == "cn"
+#     assert cn_client.auth.session.uid
 
 
 def test_bili_client(bili_client: arkprts.Client) -> None:
