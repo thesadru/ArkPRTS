@@ -126,10 +126,13 @@ def run_flatbuffers(
     return pathlib.Path(output_directory) / (pathlib.Path(fbs_path).stem + ".json")
 
 
-def resolve_fbs_schema_directory(server: typing.Literal["cn", "yostar", "tw"]) -> pathlib.Path:
+def resolve_fbs_schema_directory(
+    server: typing.Literal["cn", "yostar", "tw"],
+    prefer_guess: bool = True,
+) -> pathlib.Path:
     """Resolve the flatbuffers schema directory."""
-    if server == "tw":
-        return netn.APPDATA_DIR / "ArknightsFlatbuffers" / "tw"
+    if server == "tw" or (server == "yostar" and prefer_guess):
+        return netn.APPDATA_DIR / "ArknightsFlatbuffers" / server
 
     core_path = netn.APPDATA_DIR / "ArknightsFBS"
     core_path.mkdir(parents=True, exist_ok=True)
@@ -140,11 +143,12 @@ def resolve_fbs_schema_directory(server: typing.Literal["cn", "yostar", "tw"]) -
 async def update_fbs_schema(*, force: bool = False) -> None:
     """Download or otherwise update FBS files."""
     for server, branch in [("cn", "main"), ("yostar", "YoStar")]:
+        assert server in ("cn", "yostar")  # pyright regression
         if UPDATED_FBS[server] and not force:
             continue
 
         UPDATED_FBS[server] = True
-        directory = resolve_fbs_schema_directory(server).parent  # pyright: ignore[reportArgumentType]
+        directory = resolve_fbs_schema_directory(server, prefer_guess=False).parent
         await git.download_repository("MooncellWiki/OpenArknightsFBS", directory, branch=branch, force=force)
 
     if not UPDATED_FBS["tw"] or force:
