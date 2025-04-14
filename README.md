@@ -125,3 +125,19 @@ def login(request):
 
 Any kind of contribution is welcome.
 Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for more information.
+
+## Thanks
+
+Many thanks to all of these people and projects
+
+- [Kengxxiao](https://github.com/Kengxxiao)'s [ArknightsGameData](https://github.com/Kengxxiao/ArknightsGameData) (gamedata dump) and [OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS) (gamedata flatbuffer schemas)
+- [VaDiM](https://github.com/aelurum)'s [ArknightsStudio](https://github.com/aelurum/AssetStudio/tree/ArknightsStudio) (asset extractor)
+- [Harry Huang](https://github.com/isHarryh)'s [Ark-(Unpacker|Studio|Models)](https://github.com/isHarryh/Ark-Unpacker) (asset extractor)
+- [ChaomengOrion/ArkAssetsTool](https://github.com/ChaomengOrion/ArkAssetsTool) (one of the first asset extractors)
+- [Rhine-Department-0xf/Rhine-DFramwork](https://github.com/Rhine-Department-0xf/Rhine-DFramwork) (one of the first game clients)
+- [InfiniteTsukuyomi/PyAutoGame](https://github.com/InfiniteTsukuyomi/PyAutoGame) (one of the first game clients)
+- [yuanyan3060/ArknightsGameResource](https://github.com/yuanyan3060/ArknightsGameResource) (asset dump)
+- [kyoukaya/rhine](https://github.com/kyoukaya/rhine) (packet capture)
+- [Darknights-dev/Darknights-server](https://github.com/Darknights-dev/Darknights-server) (private server) and offshooots
+- [Shiiyuko/Arkdays](https://github.com/Shiiyuko/Arkdays) (private server)
+- [Abobo7/ArkDump](https://github.com/Abobo7/ArkDump) (automated frida-based extractor)

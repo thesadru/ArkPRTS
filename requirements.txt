@@ -3,5 +3,5 @@ pydantic==2.*
 
 rsa
 pycryptodome
-UnityPy @ git+https://github.com/MooncellWiki/UnityPy@22f5d608c5c92699e83c16f04f854462f3eb2bde
+UnityPy>=1.22.2
 bson

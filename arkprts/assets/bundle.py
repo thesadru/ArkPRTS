@@ -35,6 +35,59 @@ UnityPyObject = typing.Any
 UPDATED_FBS = {"cn": False, "yostar": False, "tw": False}
 
 
+def _read_extra_length(data: typing.Union[bytes, bytearray, memoryview], cur_pos: int, max_pos: int) -> tuple[int, int]:
+    length = 0
+    while cur_pos < max_pos:
+        b = data[cur_pos]
+        length += b
+        cur_pos += 1
+        if b != 0xFF:
+            break
+    return length, cur_pos
+
+
+# https://github.com/isHarryh/Ark-Unpacker/blob/b8b959c7df5a37d172e520c90b1845dac5008880/src/lz4ak/Block.py
+# algorithm made by Kengxxiao and adapted by Harry Huang
+def decompress_lz4ak(compressed_data: typing.Union[bytes, bytearray, memoryview], uncompressed_size: int) -> bytes:
+    """Decompresses the given data block using LZ4AK algorithm."""
+    import lz4
+    import lz4.block
+
+    ip = 0
+    op = 0
+    fixed_compressed_data = bytearray(compressed_data)
+    compressed_size = len(compressed_data)
+
+    while ip < compressed_size:
+        # Sequence token
+        literal_length = fixed_compressed_data[ip] & 0xF
+        match_length = (fixed_compressed_data[ip] >> 4) & 0xF
+        fixed_compressed_data[ip] = (literal_length << 4) | match_length
+        ip += 1
+
+        # Literals
+        if literal_length == 0xF:
+            length, ip = _read_extra_length(fixed_compressed_data, ip, compressed_size)
+            literal_length += length
+        ip += literal_length
+        op += literal_length
+        if op >= uncompressed_size:
+            break  # End of block
+
+        # Match copy
+        offset = (fixed_compressed_data[ip] << 8) | fixed_compressed_data[ip + 1]
+        fixed_compressed_data[ip] = offset & 0xFF
+        fixed_compressed_data[ip + 1] = (offset >> 8) & 0xFF
+        ip += 2
+        if match_length == 0xF:
+            length, ip = _read_extra_length(fixed_compressed_data, ip, compressed_size)
+            match_length += length
+        match_length += 4  # Min match
+        op += match_length
+
+    return lz4.block.decompress(fixed_compressed_data, uncompressed_size)  # type: ignore
+
+
 def asset_path_to_server_filename(path: str) -> str:
     """Take a path to a zipped unity asset and return its filename on the server."""
     if path == "hot_update_list.json":
@@ -351,6 +404,11 @@ class BundleAssets(base.Assets):
             subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)  # noqa: S603
         except OSError as e:
             raise ImportError("Cannot use BundleAssets without a flatc executable") from e
+
+        from UnityPy.helpers import CompressionHelper
+        from UnityPy.enums.BundleFile import CompressionFlags
+
+        CompressionHelper.DECOMPRESSION_MAP[CompressionFlags.LZHAM] = decompress_lz4ak
 
         super().__init__(default_server=default_server or (network and network.default_server), json_loads=json_loads)
 
