@@ -95,16 +95,17 @@ LOGGER: logging.Logger = logging.getLogger("arkprts.auth")
 
 RawAuthMapping = typing.TypedDict("RawAuthMapping", {"server": netn.ArknightsServer, "channel_uid": str, "token": str})
 
-YOSTAR_PASSPORT_DOMAINS: dict[typing.Literal["en", "jp", "kr"], str] = {
-    "en": "https://passport.arknights.global",
-    "jp": "https://passport.arknights.jp",
-    "kr": "https://passport.arknights.kr",
+YOSTAR_DOMAINS: dict[typing.Literal["en", "jp", "kr"], str] = {
+    "en": "https://en-sdk-api.yostarplat.com",
+    "jp": "https://jp-sdk-api.yostarplat.com",
+    "kr": "https://jp-sdk-api.yostarplat.com",
 }
 
 
 def create_random_device_ids() -> tuple[str, str, str]:
     """Create a random device id."""
     deviceid2 = "86" + "".join(random.choices(string.digits, k=13))
+    # TODO: these are not entirely correct but it doesn't seem to matter
     return uuid.uuid4().hex, deviceid2, uuid.uuid4().hex
 
 
@@ -114,6 +115,37 @@ def generate_u8_sign(data: typing.Mapping[str, object]) -> str:
 
     code = hmac.new(b"91240f70c09a08a6bc72af1a5c8d4670", query.encode(), "sha1")
     return code.hexdigest().lower()
+
+
+def generate_yostarplat_headers(
+    body: str,
+    uid: str | None = None,
+    token: str | None = None,
+    device_id: str | None = None,
+    server: typing.Literal["en", "jp", "kr"] = "en",
+) -> dict[str, str]:
+    """Generate headers for yostarplat.com endpoints."""
+    # https://github.com/thesadru/ArkPRTS/issues/10#issuecomment-2800475478
+    linked_hash_map = {
+        "PID": "US-ARKNIGHTS" if server == "en" else "JP-AK" if server == "jp" else "KR-ARKNIGHTS",
+        "Channel": "googleplay",
+        "Platform": "android",
+        "Version": "4.10.0",
+        "GVersionNo": "2000112",
+        "GBuildNo": "",
+        "Lang": "en" if server == "en" else "jp" if server == "jp" else "ko",
+        "DeviceID": device_id or str(uuid.uuid4()),
+        "DeviceModel": "F9",
+        "UID": uid or "",
+        "Token": token or "",
+        "Time": int(time.time()),
+    }
+    json_string = json.dumps(linked_hash_map, separators=(",", ":"))
+    md5_hash = hashlib.md5((json_string + body + "886c085e4a8d30a703367b120dd8353948405ec2").encode()).hexdigest()
+
+    header_auth = {"Head": linked_hash_map, "Sign": md5_hash.upper()}
+
+    return {"Authorization": json.dumps(header_auth, separators=(",", ":")), "Content-Type": "application/json"}
 
 
 @dataclasses.dataclass()
@@ -267,7 +299,8 @@ class Auth(CoreAuth):
         LOGGER.debug("Getting u8 token for %s.", channel_uid)
         channel_id = {"cn": "1", "bili": "2", "en": "3", "jp": "3", "kr": "3"}[self.server]
         if channel_id == "3":
-            extension = {"uid": channel_uid, "token": access_token}
+            # yostar also has old_uid but doesn't require it
+            extension = {"type": 1, "uid": channel_uid, "token": access_token}
         else:
             extension = {"uid": channel_uid, "access_token": access_token}
 
@@ -276,7 +309,7 @@ class Auth(CoreAuth):
             "platform": 1,
             "channelId": channel_id,
             "subChannel": channel_id,
-            "extension": json.dumps(extension),
+            "extension": json.dumps(extension, separators=(",", ":")),
             # optional fields:
             "worldId": channel_id,
             "deviceId": self.device_ids[0],
@@ -372,63 +405,76 @@ class YostarAuth(Auth):
     ) -> None:
         super().__init__(server, network=network)
 
-    async def request_passport(self, endpoint: str, **kwargs: typing.Any) -> typing.Any:
-        """Send a request to a yostar passport endpoint."""
-        return await self.request(YOSTAR_PASSPORT_DOMAINS[self.server], endpoint, **kwargs)  # type: ignore  # custom domain
+    async def request_yostarplat(self, endpoint: str, data: typing.Any, device_id: str | None = None) -> typing.Any:
+        """Send a request to a yostarplat endpoint."""
+        body = json.dumps(data, separators=(",", ":"))
+        data = await self.request(YOSTAR_DOMAINS[self.server], endpoint, data=body, headers=generate_yostarplat_headers(body, device_id=device_id, server=self.server))  # type: ignore
+        if data["Code"] != 200:
+            raise errors.BaseArkprtsError(json.dumps(data))
 
-    async def _get_access_token(self, channel_uid: str, yostar_token: str) -> str:
-        """Get an access token from a channel uid and yostar token."""
-        body = {
-            "platform": "android",
-            "uid": channel_uid,
-            "token": yostar_token,
-            "deviceId": self.device_ids[0],
-        }
-        data = await self.request_passport("user/login", json=body)
-        return data["accessToken"]
+        return data
 
     async def send_email_code(self, email: str) -> None:
         """Request to log in with a yostar account."""
         LOGGER.debug("Sending code to %s.", email)
-        body = {"platform": "android", "account": email, "authlang": "en"}
-        await self.request_passport("account/yostar_auth_request", json=body)
+        body = {"Account": email, "Randstr": "", "Ticket": ""}
+        await self.request_yostarplat("yostar/send-code", body)
 
-    async def _submit_yostar_auth(self, email: str, code: str) -> tuple[str, str]:
-        """Submit a yostar auth code and receieve a yostar uid and yostar token."""
-        body = {"account": email, "code": code}
-        data = await self.request_passport("account/yostar_auth_submit", json=body)
-        return data["yostar_uid"], data["yostar_token"]
+    async def _submit_email_code(self, email: str, code: str) -> str:
+        """Submit an email code and receive a token."""
+        body = {"Account": email, "Code": code}
+        data = await self.request_yostarplat("yostar/get-auth", body)
+        return data["Data"]["Token"]
 
-    async def _get_yostar_token(self, email: str, yostar_uid: str, yostar_token: str) -> tuple[str, str]:
-        """Get a channel uid and yostar token from a yostar uid and yostar token."""
+    async def _get_yostar_token(self, email: str, email_token: str) -> tuple[str, str]:
+        """Get an ID and Token from an email and token."""
         body = {
-            "yostar_username": email,
-            "yostar_uid": yostar_uid,
-            "yostar_token": yostar_token,
-            "deviceId": self.device_ids[0],
-            "createNew": "0",
+            "CheckAccount": 0,
+            "Geetest": {
+                "CaptchaID": None,
+                "CaptchaOutput": None,
+                "GenTime": None,
+                "LotNumber": None,
+                "PassToken": None,
+            },
+            "OpenID": email,
+            "Secret": "",
+            "Token": email_token,
+            "Type": "yostar",
+            "UserName": email,
         }
-        data = await self.request_passport("user/yostar_createlogin", json=body)
-        return data["uid"], data["token"]
+        data = await self.request_yostarplat("user/login", body)
+        return data["Data"]["UserInfo"]["ID"], data["Data"]["UserInfo"]["Token"]
 
-    async def create_guest_account(self) -> tuple[str, str]:
+    async def create_guest_account(self, username: str = "Doctor") -> tuple[str, str]:
         """Create a new guest account."""
+        device_id = str(uuid.uuid4())
         body = {
-            "deviceId": self.device_ids[0],
+            "CheckAccount": 0,
+            "Geetest": {
+                "CaptchaID": None,
+                "CaptchaOutput": None,
+                "GenTime": None,
+                "LotNumber": None,
+                "PassToken": None,
+            },
+            "OpenID": device_id,
+            "Secret": "",
+            "Token": "",
+            "Type": "device",
+            "UserName": username,  # by default seems to be based on the default model
         }
-        data = await self.request_passport("user/create", json=body)
-        LOGGER.debug("Created guest account %s", data["uid"])
-        return data["uid"], data["token"]
+        data = await self.request_yostarplat("user/login", body, device_id=device_id)
+        return data["Data"]["UserInfo"]["ID"], data["Data"]["UserInfo"]["Token"]
 
     async def _bind_nickname(self, nickname: str) -> None:
         """Bind a nickname. Required for new accounts."""
         LOGGER.debug("Binding nickname of %s to %r.", self.uid, nickname)
         await self.auth_request("user/bindNickName", json={"nickName": nickname})
 
-    async def login_with_token(self, channel_uid: str, yostar_token: str) -> None:
+    async def login_with_token(self, yostar_uid: str, yostar_token: str) -> None:
         """Login with a yostar token."""
-        access_token = await self._get_access_token(channel_uid, yostar_token)
-        self.session.uid, u8_token = await self._get_u8_token(channel_uid, access_token)
+        self.session.uid, u8_token = await self._get_u8_token(yostar_uid, yostar_token)
         await self._get_secret(self.session.uid, u8_token)
 
     async def get_token_from_email_code(
@@ -453,8 +499,8 @@ class YostarAuth(Auth):
             print(f"Code sent to {email}.")  # noqa: T201
             code = input("Enter code: ")
 
-        yostar_uid, yostar_token = await self._submit_yostar_auth(email, code)
-        return await self._get_yostar_token(email, yostar_uid, yostar_token)
+        yostar_token = await self._submit_email_code(email, code)
+        return await self._get_yostar_token(email, yostar_token)
 
     async def login_with_email_code(
         self,
@@ -468,14 +514,14 @@ class YostarAuth(Auth):
         await self.login_with_token(channel_uid, token)
 
         if stdin:
-            print(f"Channel UID: {channel_uid} Token: {token}")  # noqa: T201
+            print(f"Yostar UID: {channel_uid} Token: {token}")  # noqa: T201
             print(f'Usage: login_with_token("{channel_uid}", "{token}")')  # noqa: T201
 
         return channel_uid, token
 
     async def login_as_guest(self, nickname: str | None = None) -> tuple[str, str]:
         """Login as guest and return tokens."""
-        channel_uid, yostar_token = await self.create_guest_account()
+        channel_uid, yostar_token = await self.create_guest_account(nickname or "Doctor")
         await self.login_with_token(channel_uid, yostar_token)
         await self._bind_nickname(nickname or "Doctor")
         return channel_uid, yostar_token

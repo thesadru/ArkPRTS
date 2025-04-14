@@ -140,7 +140,7 @@ class NetworkSession:
         async with self.session.request(method, url, headers=headers, **kwargs) as resp:
             try:
                 data = await resp.json(content_type=None)
-            except TypeError as e:
+            except (TypeError, json.decoder.JSONDecodeError) as e:
                 resp.raise_for_status()
                 raise errors.InvalidContentTypeError(await resp.text()) from e
 
@@ -185,7 +185,7 @@ class NetworkSession:
             url = url + "/" + endpoint
 
         if method is None:
-            method = "POST" if kwargs.get("json") is not None else "GET"
+            method = "POST" if (kwargs.get("json") is not None or kwargs.get("data") is not None) else "GET"
 
         data = await self.raw_request(method, url, handle_errors=handle_errors, **kwargs)
 

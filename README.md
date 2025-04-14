@@ -116,9 +116,9 @@ def code(request):
 @route("/login")
 def login(request):
     auth = arkprts.YostarAuth(request.query["server"], network=...)
-    channel_uid, yostar_token = await auth.get_token_from_email_code(request.query["email"], request.query["code"])
+    yostar_uid, yostar_token = await auth.get_token_from_email_code(request.query["email"], request.query["code"])
 
-    return {"channel_uid": channel_uid, "yostar_token": yostar_token}
+    return {"yostar_uid": yostar_uid, "yostar_token": yostar_token}
 ```
 
 ## Contributing

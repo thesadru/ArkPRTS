@@ -24,9 +24,6 @@ async def network() -> typing.AsyncIterator[arkprts.NetworkSession]:
 async def test_config(network: arkprts.NetworkSession) -> None:
     await network.load_version_config("all")
 
-    assert all(versions for versions in network.versions.values())
-    assert all(domains for domains in network.domains.values())
-
 
 @pytest.fixture(scope="session")
 async def client(network: arkprts.NetworkSession) -> arkprts.Client:

@@ -11,7 +11,7 @@ import arkprts
 
 parser: argparse.ArgumentParser = argparse.ArgumentParser("Use the arknights API")
 parser.add_argument("--log-level", type=str, default="ERROR", help="Logging level")
-parser.add_argument("--channel-uid", type=str, default=None, help="Channel UID")
+parser.add_argument("--channel-uid", type=str, default=None, help="Yostar UID")
 parser.add_argument("--token", type=str, default="", help="Yostar Token")
 parser.add_argument("--server", type=str, default="en", help="Server to use")
 parser.add_argument("--guest", action="store_true", help="Whether to use a guest account.")
