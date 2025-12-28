@@ -1,0 +1,75 @@
+
+GET https://ak-conf.arknights.global/config/prod/official/network_config
+Content-Type: application/json
+X-Unity-Version: 2017.4.39f1
+User-Agent: Dalvik/2.1.0 (Linux; U; Android 11; KB2000 Build/RP1A.201005.001)
+Connection: Keep-Alive
+{"sign":"fjQROWx1gXuUAVraXKU+cgwEp+tGSHc/CLIqh265AEejVZPqoH6ir9SP2vYaYXtn7juMXdOHP37G4TiQGGF2T48krrC0WnMXp7DIPMZT6FtFACKHRbtUHV9dWWTCjDfCaKb+ZdyqenX3NFM0t8wrH0Vc7EC3WMc42myvyMOP3cU=","content":"{\"configVer\":\"1\",\"funcVer\":\"V062\",\"configs\":{\"V062\":{\"override\":true,\"network\":{\"gs\":\"https://gs.arknights.global:8443\",\"as\":\"https://as.arknights.global\",\"u8\":\"https://as.arknights.global/u8\",\"hu\":\"https://ark-us-static-online.yo-star.com/assetbundle/official\",\"hv\":\"https://ark-us-static-online.yo-star.com/assetbundle/official/{0}/version\",\"rc\":\"https://ak-conf.arknights.global/config/prod/official/remote_config\",\"an\":\"https://ark-us-static-online.yo-star.com/announce/{0}/announcement.meta.json\",\"prean\":\"https://ak-webview.arknights.global\",\"sl\":\"https://www.arknights.global/terms_of_service\",\"of\":\"https://www.arknights.global\",\"pkgAd\":\"https://play.google.com/store/apps/details?id=com.YoStarEN.Arknights\",\"pkgIOS\":\"https://apps.apple.com/us/app/id1464872022?mt=8\",\"secure\":false}}}}"}
+
+GET https://ark-us-static-online.yo-star.com/assetbundle/official/Android/version
+Content-Type: application/json
+X-Unity-Version: 2017.4.39f1
+User-Agent: Dalvik/2.1.0 (Linux; U; Android 11; KB2000 Build/RP1A.201005.001)
+Connection: Keep-Alive
+{"resVersion":"25-10-28-07-04-59_bb83f3","clientVersion":"31.5.80"}
+
+POST https://en-sdk-api.yostarplat.com/user/login
+Content-Type: application/json
+X-Unity-Version: 2017.4.39f1
+User-Agent: Dalvik/2.1.0 (Linux; U; Android 11; KB2000 Build/RP1A.201005.001)
+Connection: Keep-Alive
+Authorization: {"Head":{"PID":"US-ARKNIGHTS","Channel":"googleplay","Platform":"android","Version":"4.10.0","GVersionNo":"2000112","GBuildNo":"","Lang":"en","DeviceID":"844d13cd-28e5-424b-9d05-3b7861932898","DeviceModel":"F9","UID":"","Token":"","Time":1762090361},"Sign":"C11A3BEEFEE101B4176C574203148B6B"}
+{"CheckAccount":0,"Geetest":{"CaptchaID":null,"CaptchaOutput":null,"GenTime":null,"LotNumber":null,"PassToken":null},"OpenID":"844d13cd-28e5-424b-9d05-3b7861932898","Secret":"","Token":"","Type":"device","UserName":"Doctor"}
+{"Code":200,"Data":{"AgeVerifyMethod":0,"IsNew":1,"UserInfo":{"ID":"14470916041","UID2":0,"PID":"US-ARKNIGHTS","Token":"7b4572c903052b5d6d1757de5c0f36784aa34db0","Birthday":"","RegChannel":"googleplay","TransCode":"","State":1,"DeviceID":"844d13cd-28e5-424b-9d05-3b7861932898","CreatedAt":1762090362},"Yostar":null},"Msg":"OK"}
+
+POST https://as.arknights.global/u8/user/v1/getToken
+Content-Type: application/json
+X-Unity-Version: 2017.4.39f1
+User-Agent: Dalvik/2.1.0 (Linux; U; Android 11; KB2000 Build/RP1A.201005.001)
+Connection: Keep-Alive
+{"appId": "1", "platform": 1, "channelId": "3", "subChannel": "3", "extension": "{\"type\":1,\"uid\":\"14470916041\",\"token\":\"7b4572c903052b5d6d1757de5c0f36784aa34db0\"}", "worldId": "3", "deviceId": "0cc5b62f5372493d8b6a13608c0ea607", "deviceId2": "861666665994575", "deviceId3": "34f93e04c5ee4bb894a8ef412428783a", "sign": "2daebab43c772d9a2bc490a72dcba92bfd41594f"}
+{"result":0,"captcha":{},"error":"","uid":"08116410","channelUid":"14470916041","token":"sPudwH5veW7wfGvRQzpt+J5HG1qxJ9JjK6a7xD/7D/WYr9QltuvQEheFBimR/8+thbz3rvRUAoviOhnyOnGh+dhnsLDze+RwxJKccYUs4QQWR6bcriqhOmSc1hG11b2hEAKyF/gJQw8bDyVeUxeEKb49f+y2SwQfQ18pwRYiIdxyd5Tk4surMc+CaFAdd9jnU95wIwz1W3/u7zDFbc/SYg6iJOJvpGtO3dIfr9EejxQtCc1gmG+mUt8CeLC3a/G4L7lGL/ayZItdUCy7hV5QhQaTCaiuWtWH3PQinz+g8L7ZB8N2FSjvNeJv3lePxDiOfoaZ/FdIcpYXXKlg//y7FXdf6fhaprqNJ1BA+Z84Axrmc/ISjIFjXuGlecQ5Hn9OB2CY","isGuest":0,"extension":"{}"}
+
+POST https://gs.arknights.global:8443/account/login
+Content-Type: application/json
+X-Unity-Version: 2017.4.39f1
+User-Agent: Dalvik/2.1.0 (Linux; U; Android 11; KB2000 Build/RP1A.201005.001)
+Connection: Keep-Alive
+secret: 
+seqnum: 1
+uid: 08116410
+{"platform": 1, "networkVersion": "1", "assetsVersion": "25-10-28-07-04-59_bb83f3", "clientVersion": "31.5.80", "token": "sPudwH5veW7wfGvRQzpt+J5HG1qxJ9JjK6a7xD/7D/WYr9QltuvQEheFBimR/8+thbz3rvRUAoviOhnyOnGh+dhnsLDze+RwxJKccYUs4QQWR6bcriqhOmSc1hG11b2hEAKyF/gJQw8bDyVeUxeEKb49f+y2SwQfQ18pwRYiIdxyd5Tk4surMc+CaFAdd9jnU95wIwz1W3/u7zDFbc/SYg6iJOJvpGtO3dIfr9EejxQtCc1gmG+mUt8CeLC3a/G4L7lGL/ayZItdUCy7hV5QhQaTCaiuWtWH3PQinz+g8L7ZB8N2FSjvNeJv3lePxDiOfoaZ/FdIcpYXXKlg//y7FXdf6fhaprqNJ1BA+Z84Axrmc/ISjIFjXuGlecQ5Hn9OB2CY", "uid": "08116410", "deviceId": "0cc5b62f5372493d8b6a13608c0ea607", "deviceId2": "861666665994575", "deviceId3": "34f93e04c5ee4bb894a8ef412428783a"}
+{"result":0,"uid":"08116410","secret":"E/we4IZGjPn0JWBtSxkvZwHmKv7wSRrP","serviceLicenseVersion":0,"majorVersion":"336"}
+
+POST https://gs.arknights.global:8443/user/bindNickName
+Content-Type: application/json
+X-Unity-Version: 2017.4.39f1
+User-Agent: Dalvik/2.1.0 (Linux; U; Android 11; KB2000 Build/RP1A.201005.001)
+Connection: Keep-Alive
+secret: E/we4IZGjPn0JWBtSxkvZwHmKv7wSRrP
+seqnum: 2
+uid: 08116410
+{"nickName": "Doctor"}
+{"result":0,"playerDataDelta":{"modified":{"status":{"nickName":"Doctor","nickNumber":"88876"}},"deleted":{}}}
+
+POST https://gs.arknights.global:8443/social/getSortListInfo
+Content-Type: application/json
+X-Unity-Version: 2017.4.39f1
+User-Agent: Dalvik/2.1.0 (Linux; U; Android 11; KB2000 Build/RP1A.201005.001)
+Connection: Keep-Alive
+secret: E/we4IZGjPn0JWBtSxkvZwHmKv7wSRrP
+seqnum: 3
+uid: 08116410
+{"type": 0, "sortKeyList": ["level"], "param": {"nickName": "ashlen", "nickNumber": ""}}
+{"result":[{"level":1,"uid":"03172246"},{"level":1,"uid":"89187178"},{"level":1,"uid":"51862779"},{"level":1,"uid":"65703328"},{"level":1,"uid":"15923131"},{"level":1,"uid":"47890294"},{"level":120,"uid":"39735282"}],"playerDataDelta":{"modified":{},"deleted":{}}}
+
+POST https://gs.arknights.global:8443/social/getFriendList
+Content-Type: application/json
+X-Unity-Version: 2017.4.39f1
+User-Agent: Dalvik/2.1.0 (Linux; U; Android 11; KB2000 Build/RP1A.201005.001)
+Connection: Keep-Alive
+secret: E/we4IZGjPn0JWBtSxkvZwHmKv7wSRrP
+seqnum: 4
+uid: 08116410
+{"idList": ["39735282", "03172246", "89187178", "51862779", "65703328", "15923131", "47890294"]}
+{"friends":[{"nickName":"ashlen","nickNumber":"1534","uid":"39735282","registerTs":1591617403,"mainStageProgress":"st_15-01","charCnt":295,"furnCnt":1115,"skinCnt":90,"secretary":"char_1033_swire2","secretarySkinId":"char_1033_swire2#1","secretarySkinSp":false,"resume":"Oo","teamV2":{"rhodes":68,"action4":4,"columbia":39,"reserve1":5,"reserve4":5,"blacksteel":6,"laterano":10,"reserve6":5,"lungmen":15,"followers":3,"karlan":8,"kjerag":8,"higashi":7,"kazimierz":12,"student":4,"ursus":7,"siracusa":12,"sweep":2,"iberia":7,"leithanien":8,"lee":2,"victoria":31,"sargon":15,"bolivar":4,"abyssal":3,"egir":6,"sami":4,"lgd":2,"rhine":9,"rim":10,"penguin":3,"pinus":5,"glasgow":4,"yan":12,"elite":4,"minos":4,"tara":2,"siesta":4,"chiave":2,"sui":2,"babel":2},"friendNumLimit":100,"serverName":"Terra","level":120,"avatarId":"0","avatar":{"type":"ICON","id":"avatar_activity_PL"},"assistCharList":[{"charId":"char_4016_kazema","skinId":"char_4016_kazema#2","skills":[{"skillId":"skchr_kazema_1","unlock":1,"state":0,"specializeLevel":0,"completeUpgradeTime":-1},{"skillId":"skchr_kazema_2","unlock":1,"state":0,"specializeLevel":0,"completeUpgradeTime":-1}],"mainSkillLvl":7,"skillIndex":1,"evolvePhase":2,"favorPoint":25570,"potentialRank":4,"level":50,"crisisRecord":{},"crisisV2Record":{},"currentEquip":"uniequip_001_kazema","equip":{"uniequip_001_kazema":{"hide":0,"locked":0,"level":1},"uniequip_002_kazema":{"hide":0,"locked":1,"level":1}}},{"charId":"char_4065_judge","skinId":"char_4065_judge#2","skills":[{"skillId":"skchr_judge_1","unlock":1,"state":0,"specializeLevel":0,"completeUpgradeTime":-1},{"skillId":"skchr_judge_2","unlock":1,"state":0,"specializeLevel":0,"completeUpgradeTime":-1},{"skillId":"skchr_judge_3","unlock":1,"state":0,"specializeLevel":3,"completeUpgradeTime":-1}],"mainSkillLvl":7,"skillIndex":2,"evolvePhase":2,"favorPoint":25570,"potentialRank":1,"level":60,"crisisRecord":{},"crisisV2Record":{},"currentEquip":"uniequip_002_judge","equip":{"uniequip_001_judge":{"hide":0,"locked":0,"level":1},"uniequip_002_judge":{"hide":0,"locked":0,"level":3},"uniequip_003_judge":{"hide":0,"locked":1,"level":1}}},{"charId":"char_4080_lin","skinId":"char_4080_lin#2","skills":[{"skillId":"skchr_lin_1","unlock":1,"state":0,"specializeLevel":0,"completeUpgradeTime":-1},{"skillId":"skchr_lin_2","unlock":1,"state":0,"specializeLevel":0,"completeUpgradeTime":-1},{"skillId":"skchr_lin_3","unlock":1,"state":0,"specializeLevel":3,"completeUpgradeTime":-1}],"mainSkillLvl":7,"skillIndex":2,"evolvePhase":2,"favorPoint":25570,"potentialRank":0,"level":60,"crisisRecord":{},"crisisV2Record":{},"currentEquip":"uniequip_002_lin","equip":{"uniequip_001_lin":{"hide":0,"locked":0,"level":1},"uniequip_002_lin":{"hide":0,"locked":0,"level":3},"uniequip_003_lin":{"hide":0,"locked":1,"level":1}}}],"lastOnlineTime":1762005493,"board":["KJERAG","GLASGOW","RHODES","BLACKSTEEL","RHINE","PENGUIN"],"infoShare":1753283169,"medalBoard":{"type":"CUSTOM","custom":{"layout":[{"id":"medal_player_joingame_05","pos":[22,18]}]},"template":null},"equipStatus":{"unlockCnt":35,"limitedEquipCnt":10,"level3EquipCnt":21,"equipCharCnt":31,"limitedCharCnt":10},"recentVisited":0,"skin":{"selected":"nc_sandbox_1","state":{},"tmpl":{}}},{"nickName":"ashlen","nickNumber":"6972","uid":"03172246","registerTs":1580801255,"mainStageProgress":"tr_01","charCnt":22,"furnCnt":1,"skinCnt":0,"secretary":"char_002_amiya","secretarySkinId":"char_002_amiya#1","secretarySkinSp":false,"resume":"","teamV2":{"rhodes":13,"action4":3,"victoria":1,"rim":1,"reserve4":3,"reserve1":3,"karlan":2,"kjerag":2,"columbia":2,"lungmen":2,"higashi":1},"friendNumLimit":15,"serverName":"Terra","level":1,"avatarId":"0","assistCharList":[null],"lastOnlineTime":1580802007,"board":[],"infoShare":0,"medalBoard":{"type":"EMPTY","custom":null,"template":null},"equipStatus":{"unlockCnt":0,"limitedEquipCnt":0,"level3EquipCnt":0,"equipCharCnt":0,"limitedCharCnt":0},"recentVisited":0,"skin":{"selected":"nc_rhodes_default","state":{},"tmpl":{}}},{"nickName":"ashlen","nickNumber":"7788","uid":"89187178","registerTs":1580956019,"mainStageProgress":"tr_01","charCnt":23,"furnCnt":1,"skinCnt":0,"secretary":"char_002_amiya","secretarySkinId":"char_002_amiya#1","secretarySkinSp":false,"resume":"","teamV2":{"rhodes":10,"action4":3,"rim":1,"victoria":2,"reserve1":2,"higashi":1,"kazimierz":1,"student":1,"ursus":1,"columbia":4,"sweep":1,"followers":2,"blacksteel":3,"reserve4":2,"leithanien":1},"friendNumLimit":15,"serverName":"Terra","level":1,"avatarId":"0","assistCharList":[null],"lastOnlineTime":1580956693,"board":[],"infoShare":0,"medalBoard":{"type":"EMPTY","custom":null,"template":null},"equipStatus":{"unlockCnt":0,"limitedEquipCnt":0,"level3EquipCnt":0,"equipCharCnt":0,"limitedCharCnt":0},"recentVisited":0,"skin":{"selected":"nc_rhodes_default","state":{},"tmpl":{}}},{"nickName":"ashlen","nickNumber":"4772","uid":"51862779","registerTs":1580991460,"mainStageProgress":"tr_01","charCnt":18,"furnCnt":1,"skinCnt":0,"secretary":"char_002_amiya","secretarySkinId":"char_002_amiya#1","secretarySkinSp":false,"resume":"","teamV2":{"rhodes":9,"action4":3,"kazimierz":1,"rim":1,"reserve6":3,"laterano":1,"egir":1,"columbia":1,"higashi":1,"penguin":1,"lungmen":1,"followers":1,"victoria":1},"friendNumLimit":15,"serverName":"Terra","level":1,"avatarId":"0","assistCharList":[null],"lastOnlineTime":1580992237,"board":[],"infoShare":0,"medalBoard":{"type":"EMPTY","custom":null,"template":null},"equipStatus":{"unlockCnt":0,"limitedEquipCnt":0,"level3EquipCnt":0,"equipCharCnt":0,"limitedCharCnt":0},"recentVisited":0,"skin":{"selected":"nc_rhodes_default","state":{},"tmpl":{}}},{"nickName":"ashlen","nickNumber":"4039","uid":"65703328","registerTs":1581023940,"mainStageProgress":"tr_01","charCnt":16,"furnCnt":1,"skinCnt":0,"secretary":"char_002_amiya","secretarySkinId":"char_002_amiya#1","secretarySkinSp":false,"resume":"","teamV2":{"rhodes":8,"action4":3,"kazimierz":1,"rim":1,"victoria":2,"reserve1":2,"reserve4":1,"sami":1,"columbia":1,"higashi":1,"followers":1,"reserve6":1},"friendNumLimit":15,"serverName":"Terra","level":1,"avatarId":"0","assistCharList":[null],"lastOnlineTime":1581024701,"board":[],"infoShare":0,"medalBoard":{"type":"EMPTY","custom":null,"template":null},"equipStatus":{"unlockCnt":0,"limitedEquipCnt":0,"level3EquipCnt":0,"equipCharCnt":0,"limitedCharCnt":0},"recentVisited":0,"skin":{"selected":"nc_rhodes_default","state":{},"tmpl":{}}},{"nickName":"ashlen","nickNumber":"3507","uid":"15923131","registerTs":1581035996,"mainStageProgress":"tr_01","charCnt":21,"furnCnt":1,"skinCnt":0,"secretary":"char_002_amiya","secretarySkinId":"char_002_amiya#1","secretarySkinSp":false,"resume":"","teamV2":{"rhodes":11,"action4":3,"kazimierz":1,"rim":1,"reserve4":2,"laterano":1,"siracusa":1,"sweep":1,"sami":1,"reserve1":2,"karlan":1,"kjerag":1,"victoria":3,"blacksteel":1,"columbia":1,"reserve6":1},"friendNumLimit":15,"serverName":"Terra","level":1,"avatarId":"0","assistCharList":[null],"lastOnlineTime":1581036729,"board":[],"infoShare":0,"medalBoard":{"type":"EMPTY","custom":null,"template":null},"equipStatus":{"unlockCnt":0,"limitedEquipCnt":0,"level3EquipCnt":0,"equipCharCnt":0,"limitedCharCnt":0},"recentVisited":0,"skin":{"selected":"nc_rhodes_default","state":{},"tmpl":{}}},{"nickName":"ashlen","nickNumber":"2030","uid":"47890294","registerTs":1679724459,"mainStageProgress":"main_00-01","charCnt":4,"furnCnt":0,"skinCnt":0,"secretary":"char_002_amiya","secretarySkinId":"char_002_amiya#1","secretarySkinSp":false,"resume":"","teamV2":{"rhodes":4,"action4":3},"friendNumLimit":15,"serverName":"Terra","level":1,"avatarId":"0","avatar":{},"assistCharList":[null],"lastOnlineTime":1679724459,"board":[],"infoShare":0,"medalBoard":{"type":"EMPTY","custom":null,"template":null},"equipStatus":{"unlockCnt":0,"limitedEquipCnt":0,"level3EquipCnt":0,"equipCharCnt":0,"limitedCharCnt":0},"recentVisited":0,"skin":{"selected":"nc_rhodes_default","state":{},"tmpl":{}}}],"friendAlias":[],"resultIdList":[],"playerDataDelta":{"modified":{},"deleted":{}}}

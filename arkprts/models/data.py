@@ -334,8 +334,8 @@ class Stage(base.BaseModel):
     """How many stars the stage was beaten with (1=fail)."""
     has_battle_replay: int = pydantic.Field(alias="hasBattleReplay")
     """Whether there is auto available.."""
-    no_cost_cnt: int = pydantic.Field(alias="noCostCnt")
-    """How many free runs are remaining."""
+    # no_cost_cnt: int = pydantic.Field(alias="noCostCnt")
+    # """How many free runs are remaining."""
 
 
 class Dungeon(base.BaseModel):

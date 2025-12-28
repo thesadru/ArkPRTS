@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import collections
 import datetime
+import traceback
 import typing
 
 import pydantic
@@ -55,6 +56,14 @@ class BaseModel(pydantic.BaseModel, arbitrary_types_allowed=True):
 
     client: CoreClient = pydantic.Field(repr=False)
     """Client instance."""
+
+    if not typing.TYPE_CHECKING:
+        def __new__(cls, *args: typing.Any, **kwargs: typing.Any) -> "typing.Self":
+            try:
+                return super().__new__(cls)
+            except pydantic.ValidationError:
+                traceback.print_exc()
+                return DDict(**kwargs)
 
     def __init__(self, client: CoreClient | None = None, **kwargs: typing.Any) -> None:
         """Init."""

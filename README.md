@@ -141,3 +141,7 @@ Many thanks to all of these people and projects
 - [Darknights-dev/Darknights-server](https://github.com/Darknights-dev/Darknights-server) (private server) and offshooots
 - [Shiiyuko/Arkdays](https://github.com/Shiiyuko/Arkdays) (private server)
 - [Abobo7/ArkDump](https://github.com/Abobo7/ArkDump) (automated frida-based extractor)
+
+## Implementing your own wrapper
+
+See `logs.txt` for example requests and responses when trying to search a user on a YoStar server.
