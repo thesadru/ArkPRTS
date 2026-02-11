@@ -28,6 +28,8 @@ class Assets(abc.ABC):
 
     default_server: netn.ArknightsServer
     """Default server."""
+    default_platform: netn.ArknightsPlatform
+    """Default platform."""
     loaded: bool
     """Whether the data was loaded at any point during the code execution."""
     excel_cache: dict[netn.ArknightsServer, dict[str, typing.Any]]
@@ -39,9 +41,11 @@ class Assets(abc.ABC):
         self,
         *,
         default_server: netn.ArknightsServer | None = None,
+        default_platform: netn.ArknightsPlatform | None = None,
         json_loads: typing.Callable[[bytes], typing.Any] = json.loads,
     ) -> None:
         self.default_server = default_server or "en"
+        self.default_platform = default_platform or "Android"
         self.loaded = False
         self.excel_cache = {}
         self.json_loads = json_loads
@@ -53,16 +57,22 @@ class Assets(abc.ABC):
         *,
         network: netn.NetworkSession | None = None,
         default_server: netn.ArknightsServer | None = None,
+        default_platform: netn.ArknightsPlatform | None = None,
     ) -> Assets:
         """Create a new assets file based on what libraries are available."""
         try:
             from . import bundle
 
-            return bundle.BundleAssets(path, default_server=default_server, network=network)
+            return bundle.BundleAssets(
+                path,
+                default_server=default_server,
+                default_platform=default_platform,
+                network=network,
+            )
         except ImportError:
             from . import git
 
-            return git.GitAssets(path, default_server=default_server or "en")
+            return git.GitAssets(path, default_server=default_server or "en", default_platform=default_platform)
 
     @abc.abstractmethod
     async def update_assets(self) -> None:

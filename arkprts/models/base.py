@@ -58,6 +58,7 @@ class BaseModel(pydantic.BaseModel, arbitrary_types_allowed=True):
     """Client instance."""
 
     if not typing.TYPE_CHECKING:
+
         def __new__(cls, *args: typing.Any, **kwargs: typing.Any) -> "typing.Self":
             try:
                 return super().__new__(cls)

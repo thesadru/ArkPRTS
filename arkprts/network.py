@@ -40,6 +40,7 @@ from . import errors
 __all__ = [
     "ArknightsDistributor",
     "ArknightsDomain",
+    "ArknightsPlatform",
     "ArknightsServer",
     "NetworkSession",
 ]
@@ -50,6 +51,7 @@ LOGGER: logging.Logger = logging.getLogger("arkprts.network")
 
 ArknightsDistributor = typing.Literal["yostar", "hypergryph", "bilibili", "longcheng"]
 ArknightsServer = typing.Literal["en", "jp", "kr", "cn", "bili", "tw"]
+ArknightsPlatform = typing.Literal["Android", "IOS", "Windows"]
 
 ArknightsDomain = typing.Literal["gs", "as", "u8", "hu", "hv", "rc", "an", "prean", "sl", "of", "pkgAd", "pkgIOS"]
 NETWORK_ROUTES: dict[ArknightsServer, str] = {
@@ -60,6 +62,7 @@ NETWORK_ROUTES: dict[ArknightsServer, str] = {
     "bili": "https://ak-conf.hypergryph.com/config/prod/b/network_config",
     "tw": "https://ak-conf-tw.gryphline.com/config/prod/official/network_config",
 }
+PLATFORMS: typing.Sequence[ArknightsPlatform] = ("Android", "IOS", "Windows")
 
 # the unity version is outdated, but it doesn't seem to matter
 DEFAULT_HEADERS: typing.Mapping[str, str] = {
@@ -90,25 +93,29 @@ class NetworkSession:
 
     default_server: ArknightsServer | None = None
     """Default arknights server."""
+    default_platform: ArknightsPlatform | None = None
+    """Default arknights platform."""
 
     _session: aiohttp.ClientSession | None = None
     """Aiohttp client session."""
     domains: dict[ArknightsServer, dict[ArknightsDomain, str]]
     """Arknights server domain routes."""
-    versions: dict[ArknightsServer, dict[typing.Literal["resVersion", "clientVersion"], str]]
+    versions: dict[tuple[ArknightsServer, ArknightsPlatform], dict[typing.Literal["resVersion", "clientVersion"], str]]
     """Arknights client versions."""
 
     def __init__(
         self,
         default_server: ArknightsServer | None = None,
+        default_platform: ArknightsPlatform | None = None,
         *,
         session: aiohttp.ClientSession | None = None,
     ) -> None:
         self.default_server = default_server
+        self.default_platform = default_platform
         self._session = session
 
         self.domains = {server: {} for server in NETWORK_ROUTES}
-        self.versions = {server: {} for server in NETWORK_ROUTES}
+        self.versions = {(server, platform): {} for server in NETWORK_ROUTES for platform in PLATFORMS}
 
     @property
     def session(self) -> aiohttp.ClientSession:
@@ -158,6 +165,7 @@ class NetworkSession:
         endpoint: str | None = None,
         *,
         server: ArknightsServer | None = None,
+        platform: ArknightsPlatform | None = None,
         method: str | None = None,
         handle_errors: bool = True,
         **kwargs: typing.Any,
@@ -180,7 +188,7 @@ class NetworkSession:
             url = self.domains[server][domain]
 
         if "{0}" in url:
-            url = url.format("Android")  # iOS probably makes no difference
+            url = url.format(platform or self.default_platform or "Android")
         if endpoint:
             url = url + "/" + endpoint
 
@@ -209,13 +217,25 @@ class NetworkSession:
         content = json.loads(data["content"])
         self.domains[server].update(content["configs"][content["funcVer"]]["network"])
 
-    async def load_version_config(self, server: ArknightsServer | typing.Literal["all"] | None = None) -> None:
+    async def load_version_config(
+        self,
+        server: ArknightsServer | typing.Literal["all"] | None = None,
+        platform: ArknightsPlatform | typing.Literal["all"] | None = None,
+    ) -> None:
         """Load the version configuration."""
         server = server or self.default_server or "all"
         if server == "all":
-            await asyncio.wait([asyncio.create_task(self.load_version_config(server)) for server in NETWORK_ROUTES])
+            await asyncio.wait(
+                [asyncio.create_task(self.load_version_config(server, platform)) for server in NETWORK_ROUTES]
+            )
+            return
+        platform = platform or self.default_platform or "Android"
+        if platform == "all":
+            await asyncio.wait(
+                [asyncio.create_task(self.load_version_config(server, platform)) for platform in PLATFORMS]
+            )
             return
 
         LOGGER.debug("Loading version configuration for %s.", server)
-        data = await self.request("hv", server=server)
-        self.versions[server].update(data)
+        data = await self.request("hv", server=server, platform=platform)
+        self.versions[(server, platform)].update(data)

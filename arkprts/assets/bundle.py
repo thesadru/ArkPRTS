@@ -392,6 +392,7 @@ class BundleAssets(base.Assets):
         directory: PathLike | None = None,
         *,
         default_server: netn.ArknightsServer | None = None,
+        default_platform: netn.ArknightsPlatform | None = None,
         network: netn.NetworkSession | None = None,
         json_loads: typing.Callable[[bytes], typing.Any] = json.loads,
     ) -> None:
@@ -414,20 +415,31 @@ class BundleAssets(base.Assets):
 
         CompressionHelper.DECOMPRESSION_MAP[CompressionFlags.LZHAM] = decompress_lz4ak
 
-        super().__init__(default_server=default_server or (network and network.default_server), json_loads=json_loads)
+        super().__init__(
+            default_server=default_server or (network and network.default_server),
+            default_platform=default_platform or (network and network.default_platform),
+            json_loads=json_loads,
+        )
 
         self.directory = pathlib.Path(directory or netn.APPDATA_DIR / "ArknightsResources")
         self.network = network or netn.NetworkSession(default_server=self.default_server)
 
-    async def _download_asset(self, path: str, *, server: netn.ArknightsServer | None = None) -> bytes:
+    async def _download_asset(
+        self,
+        path: str,
+        *,
+        server: netn.ArknightsServer | None = None,
+        platform: netn.ArknightsPlatform | None = None,
+    ) -> bytes:
         """Download a raw zipped unity asset."""
         server = server or self.default_server
-        if not self.network.versions[server]:
-            await self.network.load_version_config(server)
+        platform = platform or self.default_platform
+        if not self.network.versions[(server, platform)]:
+            await self.network.load_version_config(server, platform)
 
         url = (
             self.network.domains[server]["hu"]
-            + f"/Android/assets/{self.network.versions[server]['resVersion']}/"
+            + f"/{platform}/assets/{self.network.versions[(server, platform)]['resVersion']}/"
             + asset_path_to_server_filename(path)
         )
 
@@ -435,9 +447,13 @@ class BundleAssets(base.Assets):
             response.raise_for_status()
             return await response.read()
 
-    async def _get_hot_update_list(self, server: netn.ArknightsServer) -> typing.Any:
+    async def _get_hot_update_list(
+        self,
+        server: netn.ArknightsServer,
+        platform: netn.ArknightsPlatform | None = None,
+    ) -> typing.Any:
         """Get a list of files to download."""
-        data = await self._download_asset("hot_update_list.json", server=server)
+        data = await self._download_asset("hot_update_list.json", server=server, platform=platform)
         return json.loads(data)
 
     def _get_current_hot_update_list(self, server: netn.ArknightsServer) -> typing.Any | None:
@@ -457,10 +473,11 @@ class BundleAssets(base.Assets):
         path: str,
         *,
         server: netn.ArknightsServer | None = None,
+        platform: netn.ArknightsPlatform | None = None,
     ) -> pathlib.Path:
         """Download an asset and return its path."""
-        LOGGER.debug("Downloading and unzipping asset %s for server %s", path, server)
-        zipped_data = await self._download_asset(path, server=server)
+        LOGGER.debug("Downloading and unzipping asset %s for server %s platform %s", path, server, platform)
+        zipped_data = await self._download_asset(path, server=server, platform=platform)
         data = unzip_only_file(zipped_data)
         cache_path = resolve_unity_asset_cache(path, server=server or self.default_server)
         cache_path.write_bytes(data)
@@ -470,6 +487,7 @@ class BundleAssets(base.Assets):
         self,
         *,
         server: netn.ArknightsServer | typing.Literal["all"] | None = None,
+        platform: netn.ArknightsPlatform | None = None,
         force: bool = False,
         normalize: bool = False,
     ) -> None:
@@ -477,11 +495,11 @@ class BundleAssets(base.Assets):
         server = server or self.default_server or "all"
         if server == "all":
             for server in netn.NETWORK_ROUTES:
-                await self.update_assets(server=server, force=force, normalize=normalize)
+                await self.update_assets(server=server, platform=platform, force=force, normalize=normalize)
 
             return
 
-        hot_update_list = await self._get_hot_update_list(server)
+        hot_update_list = await self._get_hot_update_list(server, platform=platform)
         old_hot_update_list = self._get_current_hot_update_list(server)
 
         requested_names = [
@@ -495,7 +513,7 @@ class BundleAssets(base.Assets):
 
         # download and extract assets
         ab_file_paths = await asyncio.gather(
-            *(self._download_unity_file(name, server=server) for name in requested_names),
+            *(self._download_unity_file(name, server=server, platform=platform) for name in requested_names),
         )
         for path in ab_file_paths:
             try:

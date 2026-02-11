@@ -11,6 +11,7 @@ parser.add_argument("output", type=str, nargs="?", default=None, help="Output di
 parser.add_argument("--force", action="store_true", default=False, help="Force new files to be downloaded")
 parser.add_argument("--log-level", type=str, default="INFO", help="Logging level")
 parser.add_argument("--server", type=str, default="en", help="Server to use, can be 'all'")
+parser.add_argument("--platform", type=str, default="Android", help="Platform to use")
 parser.add_argument("--normalize", action="store_true", help="Reformat files into a normalized expanded format")
 
 
@@ -21,8 +22,8 @@ async def main() -> None:
     logging.basicConfig()
     logging.getLogger("arkprts").setLevel(args.log_level.upper())
 
-    assets = arkprts.BundleAssets(args.output, default_server=args.server)
-    await assets.update_assets(server=args.server, force=args.force, normalize=args.normalize)
+    assets = arkprts.BundleAssets(args.output, default_server=args.server, default_platform=args.platform)
+    await assets.update_assets(server=args.server, platform=args.platform, force=args.force, normalize=args.normalize)
 
     await assets.network.close()
 

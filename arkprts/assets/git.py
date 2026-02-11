@@ -235,9 +235,10 @@ class GitAssets(base.Assets):
         parent_directory: PathLike | None = None,
         *,
         default_server: netn.ArknightsServer = "en",
+        default_platform: netn.ArknightsPlatform | None = None,
         json_loads: typing.Callable[[bytes], typing.Any] = json.loads,
     ) -> None:
-        super().__init__(default_server=default_server, json_loads=json_loads)
+        super().__init__(default_server=default_server, default_platform=default_platform, json_loads=json_loads)
 
         self.parent_directory = pathlib.Path(parent_directory or netn.APPDATA_DIR)
 

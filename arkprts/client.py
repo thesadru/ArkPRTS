@@ -72,6 +72,7 @@ class CoreClient:
         if assets is False:
             self.assets = assetsn.Assets.create(
                 default_server=self.auth.network.default_server,
+                default_platform=self.auth.network.default_platform,
                 network=self.auth.network,
             )
             self.assets.loaded = True
@@ -81,6 +82,7 @@ class CoreClient:
             self.assets = assetsn.Assets.create(
                 assets,
                 default_server=self.auth.network.default_server,
+                default_platform=self.auth.network.default_platform,
                 network=self.auth.network,
             )
 

@@ -331,16 +331,17 @@ class Auth(CoreAuth):
     ) -> str:
         """Get a secret from an arknights uid and a u8 token."""
         LOGGER.debug("Getting session secret for %s.", uid)
-        if not self.network.versions.get(self.server):
-            await self.network.load_version_config(self.server)
+        platform = "Android"  # tested safe default
+        if not self.network.versions.get((self.server, platform)):
+            await self.network.load_version_config(self.server, platform)
 
         network_version = {"cn": "5", "bili": "5", "en": "1", "jp": "1", "kr": "1"}[self.server]
 
         body = {
             "platform": 1,
             "networkVersion": network_version,
-            "assetsVersion": self.network.versions[self.server]["resVersion"],
-            "clientVersion": self.network.versions[self.server]["clientVersion"],
+            "assetsVersion": self.network.versions[(self.server, platform)]["resVersion"],
+            "clientVersion": self.network.versions[(self.server, platform)]["clientVersion"],
             "token": u8_token,
             "uid": uid,
             "deviceId": self.device_ids[0],
