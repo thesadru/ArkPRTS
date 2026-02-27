@@ -256,7 +256,14 @@ def decrypt_fbs_file(
     output_path = run_flatbuffers(fbs_path, fbs_schema_path, output_directory)
 
     parsed_data = output_path.read_text(encoding="utf-8")
-    parsed_data = recursively_collapse_keys(json.loads(parsed_data))
+    # bugfix specifically for MooncellWiki's flatc build that may emit a number as a key
+    parsed_data = re.sub(r"(?m)^(\s*)(\d+)(\s*):", r'\1"\2"\3:', parsed_data)
+    try:
+        parsed_json_data = json.loads(parsed_data)
+    except json.decoder.JSONDecodeError:
+        warnings.warn(f"parsing {output_path} failed")
+        raise
+    parsed_data = recursively_collapse_keys(parsed_json_data)
     if len(parsed_data) == 1:
         parsed_data, *_ = parsed_data.values()
 
