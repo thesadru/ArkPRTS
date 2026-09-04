@@ -497,7 +497,7 @@ class YostarAuth(Auth):
             if not stdin:
                 return "", ""
 
-            print(f"Code sent to {email}.")  # noqa: T201
+            print(f"Code sent to {email}.")
             code = input("Enter code: ")
 
         yostar_token = await self._submit_email_code(email, code)
@@ -515,8 +515,8 @@ class YostarAuth(Auth):
         await self.login_with_token(channel_uid, token)
 
         if stdin:
-            print(f"Yostar UID: {channel_uid} Token: {token}")  # noqa: T201
-            print(f'Usage: login_with_token("{channel_uid}", "{token}")')  # noqa: T201
+            print(f"Yostar UID: {channel_uid} Token: {token}")
+            print(f'Usage: login_with_token("{channel_uid}", "{token}")')
 
         return channel_uid, token
 
@@ -642,8 +642,8 @@ class BilibiliAuth(Auth):
         await self.login_with_token(channel_uid, access_token)
 
         if stdin:
-            print(f"Channel UID: {channel_uid} Access key: {access_token}")  # noqa: T201
-            print(f'Usage: login_with_token("{channel_uid}", "{access_token}")')  # noqa: T201
+            print(f"Channel UID: {channel_uid} Access key: {access_token}")
+            print(f'Usage: login_with_token("{channel_uid}", "{access_token}")')
 
         return channel_uid, access_token
 

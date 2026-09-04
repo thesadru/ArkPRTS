@@ -108,7 +108,7 @@ def decompress_tarball(path: PathLike, destination: PathLike, *, allow: str = "*
             member.name = member.name[len(top_directory + "/") :]
             members.append(member)
 
-        tar.extractall(destination, members=members)  # noqa: S202 # type: ignore
+        tar.extractall(destination, members=members)  # type: ignore
 
     return top_directory
 

@@ -167,7 +167,7 @@ def run_flatbuffers(
         "--no-warnings",
         "--force-empty",
     ]
-    result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)  # noqa: S603, UP022
+    result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)  # noqa: UP022
     if result.returncode != 0:
         file = pathlib.Path(tempfile.mktemp(".log", dir=netn.TEMP_DIR / "flatbufferlogs"))
         file.parent.mkdir(parents=True, exist_ok=True)
@@ -290,7 +290,7 @@ def load_json_or_bson(data: bytes) -> typing.Any:
     if b"\x00" in data[:256]:
         import bson
 
-        return bson.loads(data)  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
+        return bson.decode(data)  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]
 
     return json.loads(data)
 
@@ -331,9 +331,11 @@ def find_ab_assets(
                 yield (match[1] + ".lua", text)
 
             elif match := match_container(r"(gamedata/levels/(?:obt|activities)/.+?)\.bytes", container):
+                import bson
+
                 try:
                     text = normalize_json(bytes(script)[128:], lenient=not normalize)
-                except UnboundLocalError:  # effectively bson's "type not recognized" error
+                except bson.InvalidBSON:  # effectively bson's "type not recognized" error
                     text = decrypt_fbs_file(script, "prts___levels", server=server)
 
                 yield (match[1] + ".json", text)
@@ -413,12 +415,12 @@ class BundleAssets(base.Assets):
             raise ImportError("Cannot use BundleAssets without arkprts[assets]") from e
         try:
             cmd = ["flatc", "--version"]
-            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)  # noqa: S603
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
         except OSError as e:
             raise ImportError("Cannot use BundleAssets without a flatc executable") from e
 
-        from UnityPy.helpers import CompressionHelper
         from UnityPy.enums.BundleFile import CompressionFlags
+        from UnityPy.helpers import CompressionHelper
 
         CompressionHelper.DECOMPRESSION_MAP[CompressionFlags.LZHAM] = decompress_lz4ak
 

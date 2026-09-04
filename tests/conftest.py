@@ -40,4 +40,4 @@ def pytest_collection_modifyitems(config: pytest.Config, items: typing.Sequence[
 
 
 # force to run auth first
-from tests.test_auth import *  # noqa: F403 E402
+from tests.test_auth import *

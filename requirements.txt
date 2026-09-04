@@ -4,4 +4,4 @@ pydantic==2.*
 rsa
 pycryptodome
 UnityPy>=1.22.2
-bson
+pymongo
